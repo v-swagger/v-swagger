@@ -4,20 +4,32 @@
   "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.78.0"
+    "vscode": "^1.78.0",
+    "node": "^18.13.0",
+    "npm": "^8.19.3"
   },
   "categories": [
-    "Other"
+    "Swagger",
+    "OpenAPI"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "v-swagger.helloWorld",
-        "title": "Hello World"
+        "command": "v-swagger.preview",
+        "title": "Preview Swagger"
       }
-    ]
+    ],
+      "menus": {
+        "editor/title": [
+          {
+            "when": "resourceLangId == yaml",
+            "command": "v-swagger.preview",
+            "group": "navigation"
+          }
+        ]
+      }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
