@@ -14,6 +14,7 @@ const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPo
 enum WebSocketEvents {
     connection = 'connection',
     fileLoad = 'load',
+    fileUpdate = 'update',
 }
 
 type FileLoadPayload = {
@@ -111,13 +112,25 @@ export class VServer {
 
     public async serve(fileName: string): Promise<vscode.Uri> {
         await this.vSwaggerParser.parse(fileName);
+        const hash = hashFileName(fileName);
+
+        console.info(`v-swagger server: create watcher for file - %s`, fileName);
+        let watcher = vscode.workspace.createFileSystemWatcher(fileName);
+
+        watcher.onDidChange(async (uri) => {
+            console.info(`v-swagger server: file %s changed, notify clients`, uri);
+            await this.vSwaggerParser.parse(fileName);
+            this.websocketServer
+                .to(hash)
+                .emit(WebSocketEvents.fileUpdate, this.getFileContent(hash, path.basename(fileName)));
+        });
 
         const uri = vscode.Uri.joinPath(
             vscode.Uri.parse(`http://${this.host}:${this.port}`),
-            hashFileName(fileName),
+            hash,
             path.basename(fileName)
         );
-        console.info(`v-swagger server: serve counter swagger ui for %s at %s`, fileName, uri);
+        console.info(`v-swagger server: serve page for %s at %s`, fileName, uri);
         return uri;
     }
 }
