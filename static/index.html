@@ -124,7 +124,8 @@
                     }
                 );
 
-                socket.on('change', function (jsonSpec) {
+                socket.on('update', function (jsonSpec) {
+                    console.info('on update event');
                     buildSwaggerUI(jsonSpec);
                 });
             };

@@ -1,7 +1,7 @@
 import express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
+import { basename, dirname, join } from 'path';
 import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
@@ -14,6 +14,7 @@ const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPo
 enum WebSocketEvents {
     connection = 'connection',
     fileLoad = 'load',
+    fileUpdate = 'update',
 }
 
 type FileLoadPayload = {
@@ -52,10 +53,10 @@ export class VServer {
 
     private configureHttpServer() {
         const app = express();
-        app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
+        app.use('/static', express.static(join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             const htmlContent = fs
-                .readFileSync(path.join(__dirname, '..', '..', 'static', 'index.html'))
+                .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
                 .toString('utf-8')
                 .replace('%FILE_NAME%', req.params.basename)
                 .replace('%FILE_HASH%', req.params.fileNameHash);
@@ -111,13 +112,31 @@ export class VServer {
 
     public async serve(fileName: string): Promise<vscode.Uri> {
         await this.vSwaggerParser.parse(fileName);
-
+        this.registerFileChangeListener(fileName);
         const uri = vscode.Uri.joinPath(
             vscode.Uri.parse(`http://${this.host}:${this.port}`),
             hashFileName(fileName),
-            path.basename(fileName)
+            basename(fileName)
         );
-        console.info(`v-swagger server: serve counter swagger ui for %s at %s`, fileName, uri);
+        console.info(`v-swagger server: serve page for %s at %s`, fileName, uri);
         return uri;
+    }
+
+    private registerFileChangeListener(fileName: string) {
+        console.info(`v-swagger server: create watcher for file - %s`, fileName);
+        // for files not in opened workspace folders, must be specified in such a RelativePattern way
+        // for files in opened workspace folders, this also works
+        const fileNameInRelativeWay = new vscode.RelativePattern(
+            vscode.Uri.file(dirname(fileName)),
+            basename(fileName)
+        );
+        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
+        watcher.onDidChange(async (uri) => {
+            console.info(`v-swagger server: file %s changed, notify clients`, uri);
+            await this.vSwaggerParser.parse(fileName);
+            this.websocketServer
+                .to(hashFileName(fileName))
+                .emit(WebSocketEvents.fileUpdate, this.getFileContent(hashFileName(fileName), basename(fileName)));
+        });
     }
 }

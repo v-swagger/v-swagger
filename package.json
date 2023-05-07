@@ -39,7 +39,8 @@
         "lint": "eslint src --ext ts --fix",
         "format": "npx prettier --write .",
         "format:check": "npx prettier --check .",
-        "test:e2e": "node ./dist/test/runTest.js"
+        "test:e2e": "node ./dist/test/runTest.js",
+        "prepare": "husky install"
     },
     "lint-staged": {
         "*.ts": [
