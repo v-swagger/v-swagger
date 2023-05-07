@@ -1,0 +1,25 @@
+@startuml
+
+actor User as u
+entity VSCode as v
+entity vswagger_server as s
+entity vswagger_client as c
+entity Browser as b
+
+alt 
+else Start Preview
+  u -> v: click Preview Swagger
+  v -> v: activate v-swagger extension
+  v -> s: create and start vswagger server 
+  s -> s: parse swagger json object from \n counter yaml file\nsave to cache with file name hash
+  s --> v: return counter swagger page URI
+  v -> c: provide swagger page URI
+  c -> b: open the page
+  b --> c: ok
+  c --> v: ok 
+  b -> s: send load event with file name hash
+  s --> b: response with swagger json object
+  b -> b: render swagger ui with data 
+end
+
+@enduml
