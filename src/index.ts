@@ -12,9 +12,9 @@ export async function activate(context: vscode.ExtensionContext) {
         console.info('v-swagger is activated');
         const vSever = VServer.getInstance();
         await vSever.start();
-        const counterSwaggerUri = await vSever.serve(getActivatedFileName());
         const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
             try {
+                const counterSwaggerUri = await vSever.serve(getActivatedFileName());
                 const vClient = new VClient(counterSwaggerUri);
                 await vClient.preview();
             } catch (e) {
