@@ -113,23 +113,21 @@ export class VServer {
     public async serve(fileName: string): Promise<vscode.Uri> {
         await this.vSwaggerParser.parse(fileName);
         const hash = hashFileName(fileName);
+        const baseName = path.basename(fileName);
 
         console.info(`v-swagger server: create watcher for file - %s`, fileName);
-        let watcher = vscode.workspace.createFileSystemWatcher(fileName);
+        // for files not in opened workspace folders, must be specified in such a RelativePattern way
+        // for files in opened workspace folders, this also works
+        const fileNameInRelativeWay = new vscode.RelativePattern(vscode.Uri.file(path.dirname(fileName)), baseName);
+        let watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
 
         watcher.onDidChange(async (uri) => {
             console.info(`v-swagger server: file %s changed, notify clients`, uri);
             await this.vSwaggerParser.parse(fileName);
-            this.websocketServer
-                .to(hash)
-                .emit(WebSocketEvents.fileUpdate, this.getFileContent(hash, path.basename(fileName)));
+            this.websocketServer.to(hash).emit(WebSocketEvents.fileUpdate, this.getFileContent(hash, baseName));
         });
 
-        const uri = vscode.Uri.joinPath(
-            vscode.Uri.parse(`http://${this.host}:${this.port}`),
-            hash,
-            path.basename(fileName)
-        );
+        const uri = vscode.Uri.joinPath(vscode.Uri.parse(`http://${this.host}:${this.port}`), hash, baseName);
         console.info(`v-swagger server: serve page for %s at %s`, fileName, uri);
         return uri;
     }
