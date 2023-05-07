@@ -1,0 +1,5 @@
+bin
+dist
+.vscode-test
+node_modules
+out

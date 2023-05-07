@@ -7,4 +7,4 @@ module.exports = {
     useTabs: false,
     arrowParens: 'always',
     printWidth: 120,
-}
+};

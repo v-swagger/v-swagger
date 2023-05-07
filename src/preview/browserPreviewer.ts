@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-export class BrowserPreview {
+export class BrowserPreviewer {
     constructor(private previewUrl: string) {}
 
     public async preview() {

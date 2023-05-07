@@ -8,9 +8,9 @@
             href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700"
             rel="stylesheet"
         />
-        <link rel="stylesheet" type="text/css" href="node_modules/swagger-ui-dist/swagger-ui.css" />
-        <link rel="icon" type="image/png" href="node_modules/swagger-ui-dist/favicon-32x32.png" sizes="32x32" />
-        <link rel="icon" type="image/png" href="node_modules/swagger-ui-dist/favicon-16x16.png" sizes="16x16" />
+        <link rel="stylesheet" type="text/css" href="/static/swagger-ui-dist/swagger-ui.css" />
+        <link rel="icon" type="image/png" href="/static/swagger-ui-dist/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/static/swagger-ui-dist/favicon-16x16.png" sizes="16x16" />
         <style>
             html {
                 box-sizing: border-box;
@@ -88,9 +88,9 @@
 
         <div id="swagger-ui"></div>
 
-        <script src="/node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
-        <script src="/node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
-        <script src="/node_modules/socket.io/client-dist/socket.io.js"></script>
+        <script src="/static/swagger-ui-dist/swagger-ui-bundle.js"></script>
+        <script src="/static/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+        <script src="/static/socket.io/client-dist/socket.io.js"></script>
         <script>
             function buildSwaggerUI(jsonSpec) {
                 // Build a system
@@ -111,18 +111,20 @@
             window.onload = function () {
                 const socket = io.connect();
                 const fileName = '%FILE_NAME%';
+                const fileNameHash = '%FILE_HASH%';
 
                 socket.emit(
-                    'FILE_LOAD',
+                    'load',
                     {
-                        fileName,
+                        basename: fileName,
+                        fileNameHash: fileNameHash,
                     },
                     (jsonSpec) => {
                         buildSwaggerUI(jsonSpec);
                     }
                 );
 
-                socket.on('FILE_UPDATE', function (jsonSpec) {
+                socket.on('change', function (jsonSpec) {
                     buildSwaggerUI(jsonSpec);
                 });
             };
