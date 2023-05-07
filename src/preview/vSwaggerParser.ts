@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import * as YAML from 'js-yaml';
 import { FileNameHash } from '../types';
-import { hashFileName } from './utils';
+import { hashFileName } from '../utils/FileUtil';
 
 export class VSwaggerParser {
     private constructor() {}
