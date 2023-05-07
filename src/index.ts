@@ -6,26 +6,30 @@ import { VServer } from './preview/vServer';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-    console.info('v-swagger is activated');
+export async function activate(context: vscode.ExtensionContext) {
+    try {
+        console.info('v-swagger is activated');
+        const vSever = VServer.getInstance();
+        await vSever.start();
 
-    const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
-        try {
-            const vSever = new VServer();
-            await vSever.start();
+        const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
+            try {
+                const vClient = new VClient(vSever.getServerUri());
+                await vClient.preview();
+            } catch (e) {
+                console.error(`get an error during preview: %s`, e);
+            }
+        });
 
-            const vClient = new VClient(vSever.getServerUri());
-            await vClient.preview();
-        } catch (e) {
-            console.error(`get an error during preview: %s`, e);
-        }
-    });
-
-    context.subscriptions.push(disposable);
+        context.subscriptions.push(disposable);
+    } catch (e) {
+        console.log(`get an error during v-swagger extension activation: %s`, e);
+    }
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-    // todo
+    const vSever = VServer.getInstance();
+    vSever.stop();
     console.info('v-swagger is deactivated');
 }

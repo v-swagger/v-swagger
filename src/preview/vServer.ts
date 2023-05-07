@@ -30,7 +30,7 @@ export class VServer {
     private serverRunning: boolean = false;
     private vSwaggerParser: VSwaggerParser;
 
-    constructor() {
+    private constructor() {
         this.vSwaggerParser = VSwaggerParser.getInstance();
 
         const app = this.configureHttpServer();
@@ -40,10 +40,18 @@ export class VServer {
         this.initializeWebsocketServer();
     }
 
+    private static instance: VServer;
+    public static getInstance(): VServer {
+        if (!VServer.instance) {
+            VServer.instance = new VServer();
+        }
+
+        return VServer.instance;
+    }
+
     private configureHttpServer() {
         const app = express();
-        app.use(express.static(path.join(__dirname, '..', '..', 'static')));
-        app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules')));
+        app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             const htmlContent = fs
                 .readFileSync(path.join(__dirname, '..', '..', 'static', 'index.html'))
@@ -84,7 +92,7 @@ export class VServer {
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;
-                console.info(`server is listening on: %s:%s`, this.host, this.port);
+                console.info(`server is listening on: http://%s:%s`, this.host, this.port);
             });
         }
     }
@@ -96,5 +104,6 @@ export class VServer {
     public stop() {
         this.httpServer.close();
         this.serverRunning = false;
+        console.info(`server is stopping`);
     }
 }
