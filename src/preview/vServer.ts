@@ -6,6 +6,7 @@ import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
+import { hashFileName } from '../utils/FileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
 
 const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
@@ -66,8 +67,13 @@ export class VServer {
 
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
+            console.info('v-swagger server: on websocket connection event');
             socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload, callback: FileLoadCallbackFunc) => {
                 const hash = data.fileNameHash;
+                console.info(
+                    `v-swagger server: on websocket fileLoad event for file name hash - %s, join room of it`,
+                    hash
+                );
                 socket.join(hash);
                 const jsonSpec = this.getFileContent(hash, data.basename);
                 callback(jsonSpec);
@@ -92,18 +98,26 @@ export class VServer {
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;
-                console.info(`server is listening on: http://%s:%s`, this.host, this.port);
+                console.info(`v-swagger server: listening on: http://%s:%s`, this.host, this.port);
             });
         }
-    }
-
-    public getServerUri(): vscode.Uri {
-        return vscode.Uri.parse(`http://${this.host}:${this.port}`);
     }
 
     public stop() {
         this.httpServer.close();
         this.serverRunning = false;
-        console.info(`server is stopping`);
+        console.info(`v-swagger server: server is stopping`);
+    }
+
+    public async serve(fileName: string): Promise<vscode.Uri> {
+        await this.vSwaggerParser.parse(fileName);
+
+        const uri = vscode.Uri.joinPath(
+            vscode.Uri.parse(`http://${this.host}:${this.port}`),
+            hashFileName(fileName),
+            path.basename(fileName)
+        );
+        console.info(`v-swagger server: serve counter swagger ui for %s at %s`, fileName, uri);
+        return uri;
     }
 }
