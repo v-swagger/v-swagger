@@ -32,6 +32,15 @@ export class VServer {
 
     constructor() {
         this.vSwaggerParser = VSwaggerParser.getInstance();
+
+        const app = this.configureHttpServer();
+        this.httpServer = http.createServer(app);
+
+        this.websocketServer = new socketio.Server(this.httpServer);
+        this.initializeWebsocketServer();
+    }
+
+    private configureHttpServer() {
         const app = express();
         app.use(express.static(path.join(__dirname, '..', '..', 'static')));
         app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules')));
@@ -44,9 +53,10 @@ export class VServer {
             res.setHeader('Content-Type', 'text/html');
             res.send(htmlContent);
         });
+        return app;
+    }
 
-        this.httpServer = http.createServer(app);
-        this.websocketServer = new socketio.Server(this.httpServer);
+    private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
             socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload, callback: FileLoadCallbackFunc) => {
                 const hash = data.fileNameHash;
@@ -74,6 +84,7 @@ export class VServer {
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;
+                console.info(`server is listening on: %s:%s`, this.host, this.port);
             });
         }
     }
