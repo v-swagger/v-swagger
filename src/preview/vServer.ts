@@ -71,7 +71,8 @@ export class VServer {
             socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload, callback: FileLoadCallbackFunc) => {
                 const hash = data.fileNameHash;
                 console.info(
-                    `v-swagger server: on websocket fileLoad event for file name hash - ${hash}, join room of it`
+                    `v-swagger server: on websocket fileLoad event for file name hash - %s, join room of it`,
+                    hash
                 );
                 socket.join(hash);
                 const jsonSpec = this.getFileContent(hash, data.basename);
@@ -116,7 +117,7 @@ export class VServer {
             hashFileName(fileName),
             path.basename(fileName)
         );
-        console.info(`v-swagger server: serve counter swagger ui for ${fileName} at ${uri.toString()}`);
+        console.info(`v-swagger server: serve counter swagger ui for %s at %s`, fileName, uri);
         return uri;
     }
 }
