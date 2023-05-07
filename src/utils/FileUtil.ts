@@ -7,10 +7,9 @@ export function hashFileName(fileName: string): string {
 }
 
 /**
- * get full file name. e.g. /path/to/pet.yaml
+ * get absolute file path. e.g. /path/to/pet.yaml
  */
-export function getActivatedFileName() {
-    const editor = vscode.window.activeTextEditor;
+export function getActivatedFileName(editor?: vscode.TextEditor) {
     assert(editor);
     return editor.document.fileName;
 }

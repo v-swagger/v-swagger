@@ -6,7 +6,7 @@ import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
-import { hashFileName } from '../util/FileUtil';
+import { hashFileName } from '../utils/FileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
 
 const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
@@ -108,15 +108,15 @@ export class VServer {
         console.info(`v-swagger server: server is stopping`);
     }
 
-    public async serve(absoluteFilePath: string) {
-        await this.vSwaggerParser.parse(absoluteFilePath);
+    public async serve(fileName: string): Promise<vscode.Uri> {
+        await this.vSwaggerParser.parse(fileName);
 
         const uri = vscode.Uri.joinPath(
             vscode.Uri.parse(`http://${this.host}:${this.port}`),
-            hashFileName(absoluteFilePath),
-            path.basename(absoluteFilePath)
+            hashFileName(fileName),
+            path.basename(fileName)
         );
-        console.info(`v-swagger server: serve counter swagger ui for ${absoluteFilePath} at ${uri.toString()}`);
+        console.info(`v-swagger server: serve counter swagger ui for ${fileName} at ${uri.toString()}`);
         return uri;
     }
 }

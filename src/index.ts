@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { VClient } from './preview/vClient';
 import { VServer } from './preview/vServer';
-import { getActivatedFileName } from './util/FileUtil';
+import { getActivatedFileName } from './utils/FileUtil';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -14,8 +14,9 @@ export async function activate(context: vscode.ExtensionContext) {
         await vSever.start();
         const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
             try {
-                const counterSwaggerUri = await vSever.serve(getActivatedFileName());
-                const vClient = new VClient(counterSwaggerUri);
+                const fileName = getActivatedFileName(vscode.window.activeTextEditor);
+                const uri = await vSever.serve(fileName);
+                const vClient = new VClient(uri);
                 await vClient.preview();
             } catch (e) {
                 console.error(`get an error during preview: %s`, e);
