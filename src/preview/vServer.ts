@@ -6,8 +6,8 @@ import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
+import { hashFileName } from '../util/FileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
-import { hashFileName } from '../utils';
 
 const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
 
@@ -67,10 +67,10 @@ export class VServer {
 
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
-            console.log('v-swagger server: on websocket connection event');
+            console.info('v-swagger server: on websocket connection event');
             socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload, callback: FileLoadCallbackFunc) => {
                 const hash = data.fileNameHash;
-                console.log(
+                console.info(
                     `v-swagger server: on websocket fileLoad event for file name hash - ${hash}, join room of it`
                 );
                 socket.join(hash);
@@ -90,7 +90,7 @@ export class VServer {
         return content;
     }
 
-    public async startServe(absoluteFilePath: string) {
+    public async start() {
         if (!this.serverRunning) {
             // todo: make host and port configurable
             this.host = 'localhost';
@@ -100,6 +100,15 @@ export class VServer {
                 console.info(`v-swagger server: listening on: http://%s:%s`, this.host, this.port);
             });
         }
+    }
+
+    public stop() {
+        this.httpServer.close();
+        this.serverRunning = false;
+        console.info(`v-swagger server: server is stopping`);
+    }
+
+    public async serve(absoluteFilePath: string) {
         await this.vSwaggerParser.parse(absoluteFilePath);
 
         const uri = vscode.Uri.joinPath(
@@ -107,13 +116,7 @@ export class VServer {
             hashFileName(absoluteFilePath),
             path.basename(absoluteFilePath)
         );
-        console.log(`v-swagger server: serve counter swagger ui for ${absoluteFilePath} at ${uri.toString()}`);
+        console.info(`v-swagger server: serve counter swagger ui for ${absoluteFilePath} at ${uri.toString()}`);
         return uri;
-    }
-
-    public stop() {
-        this.httpServer.close();
-        this.serverRunning = false;
-        console.info(`v-swagger server: server is stopping`);
     }
 }

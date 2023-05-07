@@ -3,8 +3,7 @@
 import * as vscode from 'vscode';
 import { VClient } from './preview/vClient';
 import { VServer } from './preview/vServer';
-import assert from 'assert';
-import { hashFileName } from './utils';
+import { getActivatedFileName } from './util/FileUtil';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -12,7 +11,8 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         console.info('v-swagger is activated');
         const vSever = VServer.getInstance();
-        const counterSwaggerUri = await vSever.startServe(getActivatedFileName());
+        await vSever.start();
+        const counterSwaggerUri = await vSever.serve(getActivatedFileName());
         const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
             try {
                 const vClient = new VClient(counterSwaggerUri);
@@ -24,17 +24,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
         context.subscriptions.push(disposable);
     } catch (e) {
-        console.log(`get an error during v-swagger extension activation: %s`, e);
+        console.info(`get an error during v-swagger extension activation: %s`, e);
     }
-}
-
-/**
- * get full file name. e.g. /path/to/pet.yaml
- */
-function getActivatedFileName() {
-    const editor = vscode.window.activeTextEditor;
-    assert(editor);
-    return editor.document.fileName;
 }
 
 // This method is called when your extension is deactivated
