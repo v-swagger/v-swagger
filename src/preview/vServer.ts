@@ -1,12 +1,12 @@
 import express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
+import { basename, dirname, join } from 'path';
 import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
-import { basename, dirname, hashFileName } from '../utils/FileUtil';
+import { hashFileName } from '../utils/FileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
 
 const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
@@ -53,10 +53,10 @@ export class VServer {
 
     private configureHttpServer() {
         const app = express();
-        app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
+        app.use('/static', express.static(join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             const htmlContent = fs
-                .readFileSync(path.join(__dirname, '..', '..', 'static', 'index.html'))
+                .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
                 .toString('utf-8')
                 .replace('%FILE_NAME%', req.params.basename)
                 .replace('%FILE_HASH%', req.params.fileNameHash);
