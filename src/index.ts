@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
             try {
                 const fileName = getActivatedFileName(vscode.window.activeTextEditor);
                 const uri = await vSever.serve(fileName);
-                const vClient = new VClient(uri);
+                const vClient = new VClient(uri, fileName);
                 await vClient.preview();
             } catch (e) {
                 console.error(`get an error during preview: %s`, e);

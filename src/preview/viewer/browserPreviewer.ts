@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+
 export class BrowserPreviewer {
-    constructor(private previewUrl: string) {}
+    constructor(private previewUrl: string, private fileName: string) {}
 
     public async preview() {
         try {

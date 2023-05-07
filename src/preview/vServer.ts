@@ -9,8 +9,6 @@ import { FileNameHash } from '../types';
 import { hashFileName } from '../utils/FileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
 
-const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
-
 enum WebSocketEvents {
     connection = 'connection',
     fileLoad = 'load',
@@ -22,10 +20,13 @@ type FileLoadPayload = {
     basename: string;
 };
 
+const DEFAULT_HOST = 'localhost';
+const DEFAULT_PORT = 18512;
+
 type FileLoadCallbackFunc = (jsonSpec: object) => void;
 export class VServer {
-    private host = '';
-    private port: number = SERVER_PORT;
+    private host: string = DEFAULT_HOST;
+    private port: number = DEFAULT_PORT;
     private httpServer: http.Server;
     private websocketServer: socketio.Server;
 
@@ -94,8 +95,8 @@ export class VServer {
 
     public async start() {
         if (!this.serverRunning) {
-            // todo: make host and port configurable
-            this.host = 'localhost';
+            this.host = vscode.workspace.getConfiguration('swaggerViewer').defaultHost || DEFAULT_HOST;
+            this.port = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || DEFAULT_PORT;
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;
