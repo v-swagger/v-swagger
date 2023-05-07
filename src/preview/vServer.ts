@@ -119,7 +119,7 @@ export class VServer {
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
         const fileNameInRelativeWay = new vscode.RelativePattern(vscode.Uri.file(path.dirname(fileName)), baseName);
-        let watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
+        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
             console.info(`v-swagger server: file %s changed, notify clients`, uri);
             await this.vSwaggerParser.parse(fileName);
