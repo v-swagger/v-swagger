@@ -1,8 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { VClient } from './preview/vClient';
-import { VServer } from './preview/vServer';
+import { VClient } from './core/vClient';
+import { VServer } from './core/vServer';
 import { getActivatedFileName } from './utils/fileUtil';
 
 // This method is called when your extension is activated

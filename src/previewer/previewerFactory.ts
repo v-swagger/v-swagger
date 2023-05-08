@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
+import { Previewer } from '../types';
 import { BrowserPreviewer } from './browserPreviewer';
 import { WebviewPanelPreviewer } from './webviewPanelPreviewer';
-
-export interface Previewer {
-    preview(): Promise<void>;
-}
 
 export class PreviewerFactory {
     static create(uri: vscode.Uri): Previewer {

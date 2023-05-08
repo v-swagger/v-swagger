@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Previewer } from './previewerFactory';
+import { Previewer } from '../types';
 
 export class BrowserPreviewer implements Previewer {
     constructor(private uri: vscode.Uri) {}
