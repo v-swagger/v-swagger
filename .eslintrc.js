@@ -6,6 +6,7 @@ module.exports = {
         ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
         sourceType: 'module', // Allows for the use of imports
     },
+    plugins: ['filenames'],
     rules: {
         '@typescript-eslint/naming-convention': 'error',
         semi: 'off',
@@ -14,5 +15,6 @@ module.exports = {
         curly: 'warn',
         eqeqeq: 'error',
         'no-throw-literal': 'warn',
+        'filenames/match-regex': [2, '^[a-z]+([A-Za-z0-9]+)*(.spec|.test|.unit)?', true],
     },
 };
