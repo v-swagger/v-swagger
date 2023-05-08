@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+    version: 1.0.0
+    title: '@sap/deepsea-catalog-shared should not be replaced'
+    description: this is the description
+paths:
+    /systems:
+        get:
+            x-eov-operation-id: allSystems
+            x-eov-operation-handler: dist/controllers/systemController
+            description: Get all systems
+            responses:
+                200:
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AllSystemsResponse'
+                401:
+                    $ref: '../../catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized'
+                404:
+                    $ref: '../../catalog-shared/spec/catalog-shared.yaml#/components/responses/NotFound'
+                500:
+                    $ref: '../../catalog-shared/spec/catalog-shared.yaml#/components/responses/InternalServerError'
