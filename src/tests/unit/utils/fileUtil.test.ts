@@ -1,5 +1,5 @@
 import { TextEditor } from 'vscode';
-import { getActivatedFileName, hashFileName } from '../../../src/utils/fileUtil';
+import { getActivatedFileName, hashFileName } from '../../../utils/fileUtil';
 
 describe('test fileUtils', () => {
     it('should get an hash string', () => {
