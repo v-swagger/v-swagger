@@ -53,7 +53,7 @@
                     "example": {
                         "^/api/old-path": "/api/new-path"
                     },
-                    "description": "path rewrite rules. 'key' is replaced with 'value'. Regex is supported in key"
+                    "description": "Path rewrite rules. 'key' is replaced with 'value'. Regex is supported in key. The rules only can be used in the reference starting with $ref"
                 }
             }
         }
