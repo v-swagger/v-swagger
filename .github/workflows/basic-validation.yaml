@@ -1,4 +1,4 @@
-name: Code Style Validation
+name: Basic Validation
 
 on:
     push:
