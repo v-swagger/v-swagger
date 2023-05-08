@@ -9,39 +9,21 @@
             "name": "Run Extension",
             "type": "extensionHost",
             "request": "launch",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
+            "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "preLaunchTask": "${defaultBuildTask}"
         },
         {
-            "type": "node",
+            "name": "Extension Tests",
+            "type": "extensionHost",
             "request": "launch",
-            "name": "Run Opened Test",
-            "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
             "args": [
-                "--config",
-                "${workspaceFolder}/jest.config.js",
-                "--runInBand",
-                "--no-coverage",
-                "--forceExit",
-                "/${fileBasenameNoExtension}.js"
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/dist/test/suite/index",
+                "--disable-extensions"
             ],
-            "windows": {
-                "program": "${workspaceFolder}/node_modules/jest/bin/jest"
-            },
-            "smartStep": true,
-            "sourceMaps": true,
-            "outputCapture": "std",
-            "skipFiles": [
-                "${workspaceFolder}/node_modules/**/*.js",
-                "<node_internals>/**/*.js"
-            ],
-            "internalConsoleOptions": "neverOpen"
-        },
+            "outFiles": ["${workspaceFolder}/dist/test/**/*.js"],
+            "preLaunchTask": "${defaultBuildTask}"
+        }
     ]
 }
