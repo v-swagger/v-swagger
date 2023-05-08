@@ -95,8 +95,7 @@ export class VServer {
 
     public async start() {
         if (!this.serverRunning) {
-            this.host = vscode.workspace.getConfiguration('swaggerViewer').defaultHost || DEFAULT_HOST;
-            this.port = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || DEFAULT_PORT;
+            this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort || DEFAULT_PORT;
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;

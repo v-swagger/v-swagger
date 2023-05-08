@@ -7,7 +7,7 @@ export class VClient {
     constructor(readonly uri: vscode.Uri, readonly fileName: string) {}
 
     public async preview() {
-        const previewInBrowser: boolean = vscode.workspace.getConfiguration('swaggerViewer').previewInBrowser;
+        const previewInBrowser: boolean = vscode.workspace.getConfiguration('v-swagger').previewInBrowser;
         if (previewInBrowser) {
             console.info(`v-swagger client: going to open %s in default browser`, this.uri);
             const previewer = new BrowserPreviewer(this.uri.toString(), this.fileName);
