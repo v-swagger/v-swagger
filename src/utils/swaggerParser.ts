@@ -1,4 +1,5 @@
 import $RefParser from '@apidevtools/json-schema-ref-parser';
+import { JSONSchema } from '@apidevtools/json-schema-ref-parser/dist/lib/types';
 import { readFile } from 'fs/promises';
 import * as YAML from 'js-yaml';
 import { dirname, resolve } from 'path';
@@ -19,20 +20,23 @@ export class SwaggerParser {
             if (this.rewrite.isApplicable()) {
                 activatedYaml = this.rewrite.rewrite(activatedYaml);
             }
-            const schema = YAML.load(activatedYaml) as Record<string, string>;
+            let schema = YAML.load(activatedYaml) as JSONSchema;
 
-            this.resolveRefs(schema, dirname(fileName));
-
-            const content = await $RefParser.dereference(schema);
+            try {
+                this.resolveRefs(schema, dirname(fileName));
+                schema = await $RefParser.dereference(schema, { continueOnError: true });
+            } catch (e) {
+                console.error(`swagger parser: dereference failed due to %s`, e);
+            }
             const hash = hashFileName(fileName);
-            this.cache.set(hash, content);
+            this.cache.set(hash, schema);
         } catch (e) {
             console.error(`get an error when parsing yaml: %j`, e);
             throw e;
         }
     }
 
-    private resolveRefs(schema: Record<string, string>, basePath: string) {
+    private resolveRefs(schema: JSONSchema, basePath: string) {
         if (typeof schema !== 'object') {
             return;
         }
