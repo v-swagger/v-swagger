@@ -34,6 +34,9 @@ export class VServer {
     private vSwaggerParser: VSwaggerParser;
 
     private constructor() {
+        // TODO: validate the port
+        this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
+
         this.vSwaggerParser = VSwaggerParser.getInstance();
 
         const app = this.configureHttpServer();
@@ -95,7 +98,7 @@ export class VServer {
 
     public async start() {
         if (!this.serverRunning) {
-            this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort || DEFAULT_PORT;
+            // select an available port
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;

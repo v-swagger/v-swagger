@@ -41,7 +41,7 @@
                 },
                 "v-swagger.previewInBrowser": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Whether to open preview in browser, default: preview inside vscode"
                 }
             }
