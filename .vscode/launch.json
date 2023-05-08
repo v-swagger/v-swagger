@@ -34,7 +34,8 @@
             "sourceMaps": true,
             "outputCapture": "std",
             "skipFiles": ["${workspaceFolder}/node_modules/**/*.js", "<node_internals>/**/*.js"],
-            "internalConsoleOptions": "neverOpen"
+            "internalConsoleOptions": "neverOpen",
+            "preLaunchTask": "build"
         }
     ]
 }

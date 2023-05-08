@@ -43,6 +43,17 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to open preview in browser, default: preview inside vscode"
+                },
+                "v-swagger.pathRewrite": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "default": {},
+                    "example": {
+                        "^/api/old-path": "/api/new-path"
+                    },
+                    "description": "Path rewrite rules. 'key' is replaced with 'value'. Regex is supported in key. The rules only can be used in the reference starting with $ref"
                 }
             }
         }
@@ -60,7 +71,7 @@
         "prepare": "husky install"
     },
     "lint-staged": {
-        "*.ts": [
+        "*.ts|json": [
             "eslint --fix",
             "prettier --write"
         ],
