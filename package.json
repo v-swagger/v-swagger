@@ -29,6 +29,22 @@
                     "group": "navigation"
                 }
             ]
+        },
+        "configuration": {
+            "type": "object",
+            "title": "V-Swagger Configuration",
+            "properties": {
+                "v-swagger.defaultPort": {
+                    "type": "integer",
+                    "default": 18512,
+                    "description": "Default port in which the preview should be opened."
+                },
+                "v-swagger.previewInBrowser": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to open preview in browser, default: preview inside vscode"
+                }
+            }
         }
     },
     "scripts": {
