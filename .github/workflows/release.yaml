@@ -58,8 +58,14 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Create Release
-              uses: softprops/action-gh-release@v0.1.15
-              with:
-                  body: ${{steps.build_changelog.outputs.changelog}}
+              id: create_release
+              uses: actions/create-release@latest
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: Release ${{ github.ref }}
+                  body: |
+                      ${{ steps.build_changelog.outputs.changelog }}
+                  draft: false
+                  prerelease: false
