@@ -1,3 +1,5 @@
 export function run(): Promise<void> {
-    return new Promise((c, e) => {});
+    return new Promise((resolve, _) => {
+        resolve();
+    });
 }
