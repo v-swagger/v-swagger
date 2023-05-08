@@ -6,7 +6,7 @@ import { getPortPromise } from 'portfinder';
 import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
-import { hashFileName } from '../utils/FileUtil';
+import { hashFileName } from '../utils/fileUtil';
 import { VSwaggerParser } from './vSwaggerParser';
 
 const SERVER_PORT = vscode.workspace.getConfiguration('swaggerViewer').defaultPort || 18512;
