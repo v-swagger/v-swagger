@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { VClient } from './preview/vClient';
 import { VServer } from './preview/vServer';
-import { getActivatedFileName } from './utils/FileUtil';
+import { getActivatedFileName } from './utils/fileUtil';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
