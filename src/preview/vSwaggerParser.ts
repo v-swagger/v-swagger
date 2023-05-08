@@ -4,7 +4,6 @@ import { FileNameHash } from '../types';
 import { hashFileName } from '../utils/FileUtil';
 
 export class VSwaggerParser {
-    private constructor() {}
     private cache: Map<FileNameHash, object> = new Map();
     private static instance: VSwaggerParser;
     public static getInstance(): VSwaggerParser {
