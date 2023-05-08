@@ -7,7 +7,7 @@ import * as socketio from 'socket.io';
 import * as vscode from 'vscode';
 import { FileNameHash } from '../types';
 import { hashFileName } from '../utils/fileUtil';
-import { VSwaggerParser } from './vSwaggerParser';
+import { SwaggerParser } from '../utils/swaggerParser';
 
 enum WebSocketEvents {
     connection = 'connection',
@@ -31,13 +31,14 @@ export class VServer {
     private websocketServer: socketio.Server;
 
     private serverRunning = false;
-    private vSwaggerParser: VSwaggerParser;
+    private swaggerParser: SwaggerParser;
 
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
 
-        this.vSwaggerParser = VSwaggerParser.getInstance();
+        const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
+        this.swaggerParser = new SwaggerParser(rewriteConfig);
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
@@ -87,7 +88,7 @@ export class VServer {
     }
 
     private getFileContent(hash: FileNameHash, basename: string): object {
-        const content = this.vSwaggerParser.getByFileNameHash(hash);
+        const content = this.swaggerParser.getByFileNameHash(hash);
         if (!content) {
             const msg = `cannot load file content: ${basename}`;
             console.error(msg);
@@ -114,7 +115,7 @@ export class VServer {
     }
 
     public async serve(fileName: string): Promise<vscode.Uri> {
-        await this.vSwaggerParser.parse(fileName);
+        await this.swaggerParser.parse(fileName);
         this.registerFileChangeListener(fileName);
         const uri = vscode.Uri.joinPath(
             vscode.Uri.parse(`http://${this.host}:${this.port}`),
@@ -136,7 +137,7 @@ export class VServer {
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
             console.info(`v-swagger server: file %s changed, notify clients`, uri);
-            await this.vSwaggerParser.parse(fileName);
+            await this.swaggerParser.parse(fileName);
             this.websocketServer
                 .to(hashFileName(fileName))
                 .emit(WebSocketEvents.fileUpdate, this.getFileContent(hashFileName(fileName), basename(fileName)));
