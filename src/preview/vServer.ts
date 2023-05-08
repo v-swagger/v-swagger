@@ -24,12 +24,12 @@ type FileLoadPayload = {
 
 type FileLoadCallbackFunc = (jsonSpec: object) => void;
 export class VServer {
-    private host: string = '';
+    private host = '';
     private port: number = SERVER_PORT;
     private httpServer: http.Server;
     private websocketServer: socketio.Server;
 
-    private serverRunning: boolean = false;
+    private serverRunning = false;
     private vSwaggerParser: VSwaggerParser;
 
     private constructor() {
