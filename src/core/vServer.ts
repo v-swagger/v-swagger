@@ -72,7 +72,7 @@ export class VServer {
 
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
-            console.info(`[v-server]: [v-server]: on websocket connection event`);
+            console.info(`[v-server]: on websocket connection event`);
             socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
