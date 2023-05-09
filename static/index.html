@@ -113,16 +113,11 @@
                 const fileName = '%FILE_NAME%';
                 const fileNameHash = '%FILE_HASH%';
 
-                socket.emit(
-                    'load',
-                    {
-                        basename: fileName,
-                        fileNameHash: fileNameHash,
-                    },
-                    (jsonSpec) => {
-                        buildSwaggerUI(jsonSpec);
-                    }
-                );
+                // to load json spec
+                socket.emit('load', {
+                    basename: fileName,
+                    fileNameHash: fileNameHash,
+                });
 
                 socket.on('update', function (jsonSpec) {
                     console.info('on update event');

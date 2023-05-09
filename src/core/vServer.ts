@@ -23,7 +23,6 @@ type FileLoadPayload = {
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORT = 18512;
 
-type FileLoadCallbackFunc = (jsonSpec: object) => void;
 export class VServer {
     private host: string = DEFAULT_HOST;
     private port: number = DEFAULT_PORT;
@@ -74,23 +73,22 @@ export class VServer {
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
             console.info('v-swagger server: on websocket connection event');
-            socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload, callback: FileLoadCallbackFunc) => {
+            socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(
                     `v-swagger server: on websocket fileLoad event for file name hash - %s, join room of it`,
                     hash
                 );
                 socket.join(hash);
-                const jsonSpec = this.getFileContent(hash, data.basename);
-                callback(jsonSpec);
+                this.pushJsonSpec(hash);
             });
         });
     }
 
-    private getFileContent(hash: FileNameHash, basename: string): object {
+    private getFileContent(hash: FileNameHash): object {
         const content = this.swaggerParser.getByFileNameHash(hash);
         if (!content) {
-            const msg = `cannot load file content: ${basename}`;
+            const msg = `cannot load file content with hash: ${hash}`;
             console.error(msg);
             throw new Error(msg);
         }
@@ -138,9 +136,15 @@ export class VServer {
         watcher.onDidChange(async (uri) => {
             console.info(`v-swagger server: file %s changed, notify clients`, uri);
             await this.swaggerParser.parse(fileName);
-            this.websocketServer
-                .to(hashFileName(fileName))
-                .emit(WebSocketEvents.fileUpdate, this.getFileContent(hashFileName(fileName), basename(fileName)));
+            this.pushJsonSpec(hashFileName(fileName));
         });
+    }
+
+    private pushJsonSpec(hash: FileNameHash) {
+        try {
+            this.websocketServer.to(hash).emit(WebSocketEvents.fileUpdate, this.getFileContent(hash));
+        } catch (e) {
+            console.error(`get an error when pushing json spec to ui: %j`, e);
+        }
     }
 }
