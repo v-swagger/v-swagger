@@ -28,7 +28,7 @@ export class SwaggerParser {
             const hash = hashFileName(fileName);
             this.cache.set(hash, schema);
         } catch (e) {
-            console.error(`get an error when parsing yaml: %j`, e);
+            console.error(`[swagger-parser]: get an error when parsing yaml: %j`, e);
             throw e;
         }
     }
@@ -43,7 +43,7 @@ export class SwaggerParser {
                 },
             });
         } catch (e) {
-            console.error(`swagger parser: dereference failed due to %s`, e);
+            console.error(`[swagger-parser]: dereference failed due to %s`, e);
         }
 
         return schema;
@@ -69,6 +69,7 @@ export class SwaggerParser {
         if (ref.startsWith('#/')) {
             return ref;
         } else {
+            console.info(`[swagger-parser]: resolving path -> %s`, ref);
             return resolve(basePath, ref);
         }
     }

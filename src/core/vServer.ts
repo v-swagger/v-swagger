@@ -72,27 +72,14 @@ export class VServer {
 
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
-            console.info('v-swagger server: on websocket connection event');
+            console.info(`[v-server]: [v-server]: on websocket connection event`);
             socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
-                console.info(
-                    `v-swagger server: on websocket fileLoad event for file name hash - %s, join room of it`,
-                    hash
-                );
+                console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
                 socket.join(hash);
-                await this.pushJsonSpec(hash);
+                this.pushJsonSpec(hash);
             });
         });
-    }
-
-    private getFileContent(hash: FileNameHash): object {
-        const content = this.swaggerParser.getByFileNameHash(hash);
-        if (!content) {
-            const msg = `cannot load file content with hash: ${hash}`;
-            console.error(msg);
-            throw new Error(msg);
-        }
-        return content;
     }
 
     public async start() {
@@ -101,7 +88,7 @@ export class VServer {
             this.port = await getPortPromise({ port: this.port });
             this.httpServer.listen(this.port, this.host, () => {
                 this.serverRunning = true;
-                console.info(`v-swagger server: listening on: http://%s:%s`, this.host, this.port);
+                console.info(`[v-server]: server is listening on: http://%s:%s`, this.host, this.port);
             });
         }
     }
@@ -109,7 +96,7 @@ export class VServer {
     public stop() {
         this.httpServer.close();
         this.serverRunning = false;
-        console.info(`v-swagger server: server is stopping`);
+        console.info(`[v-server]: server is stopping`);
     }
 
     public async serve(fileName: string): Promise<vscode.Uri> {
@@ -120,12 +107,12 @@ export class VServer {
             hashFileName(fileName),
             basename(fileName)
         );
-        console.info(`v-swagger server: serve page for %s at %s`, fileName, uri);
+        console.info(`[v-server]: serve page for %s at %s`, fileName, uri);
         return uri;
     }
 
     private registerFileChangeListener(fileName: string) {
-        console.info(`v-swagger server: create watcher for file - %s`, fileName);
+        console.info(`[v-server]: create watcher for file - %s`, fileName);
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
         const fileNameInRelativeWay = new vscode.RelativePattern(
@@ -134,18 +121,21 @@ export class VServer {
         );
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
-            console.info(`v-swagger server: file %s changed, notify clients`, uri);
+            console.info(`[v-server]: file %s changed, notify clients`, uri);
             await this.swaggerParser.parse(fileName);
-            await this.pushJsonSpec(hashFileName(fileName));
+            this.pushJsonSpec(hashFileName(fileName));
         });
     }
 
     private async pushJsonSpec(hash: FileNameHash) {
         try {
-            const jsonSpec = this.getFileContent(hash);
+            const jsonSpec = this.swaggerParser.getByFileNameHash(hash);
+            if (!jsonSpec) {
+                throw new Error(`cannot load file content with hash: ${hash}`);
+            }
             await this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
         } catch (e) {
-            console.error(`get an error when pushing json spec to ui: %j`, e);
+            console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
         }
     }
 }

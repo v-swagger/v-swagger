@@ -71,7 +71,7 @@
         "prepare": "husky install"
     },
     "lint-staged": {
-        "*.ts|json": [
+        "*.ts|.json": [
             "eslint --fix",
             "prettier --write"
         ],
