@@ -2,7 +2,7 @@
     "name": "v-swagger",
     "displayName": "v-swagger",
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "engines": {
         "vscode": "^1.78.0",
         "node": "^18.13.0",
@@ -68,7 +68,8 @@
         "format:check": "npx prettier --check .",
         "pretest": "npm run compile && npm run lint",
         "test": "npx jest --maxWorkers=4 --logHeapUsage --coverage --coverageThreshold '{}' --forceExit",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "package": "npx vsce package"
     },
     "lint-staged": {
         "*.ts|.json": [

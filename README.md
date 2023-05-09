@@ -1,6 +1,6 @@
 # v-swagger README
 
-This is the README for your extension "v-swagger".
+View Swagger (v-swagger) is a VS Code extension that is able to parse and preview Swagger/OpenAPI definition locally either in VS Code Webview panel or Browsers.
 
 ## Development
 
