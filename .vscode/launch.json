@@ -9,8 +9,12 @@
             "name": "Run Extension",
             "type": "extensionHost",
             "request": "launch",
-            "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
             "preLaunchTask": "${defaultBuildTask}"
         },
         {
@@ -33,9 +37,12 @@
             "smartStep": true,
             "sourceMaps": true,
             "outputCapture": "std",
-            "skipFiles": ["${workspaceFolder}/node_modules/**/*.js", "<node_internals>/**/*.js"],
+            "skipFiles": [
+                "${workspaceFolder}/node_modules/**/*.js",
+                "<node_internals>/**/*.js"
+            ],
             "internalConsoleOptions": "neverOpen",
-            "preLaunchTask": "build"
+            "preLaunchTask": "build only once"
         }
     ]
 }
