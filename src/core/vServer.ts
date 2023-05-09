@@ -11,8 +11,8 @@ import { SwaggerParser } from '../utils/swaggerParser';
 
 enum WebSocketEvents {
     connection = 'connection',
-    fileLoad = 'load',
-    fileUpdate = 'update',
+    load = 'load',
+    push = 'push',
 }
 
 type FileLoadPayload = {
@@ -73,14 +73,14 @@ export class VServer {
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
             console.info('v-swagger server: on websocket connection event');
-            socket.on(WebSocketEvents.fileLoad, (data: FileLoadPayload) => {
+            socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(
                     `v-swagger server: on websocket fileLoad event for file name hash - %s, join room of it`,
                     hash
                 );
                 socket.join(hash);
-                this.pushJsonSpec(hash);
+                await this.pushJsonSpec(hash);
             });
         });
     }
@@ -136,13 +136,14 @@ export class VServer {
         watcher.onDidChange(async (uri) => {
             console.info(`v-swagger server: file %s changed, notify clients`, uri);
             await this.swaggerParser.parse(fileName);
-            this.pushJsonSpec(hashFileName(fileName));
+            await this.pushJsonSpec(hashFileName(fileName));
         });
     }
 
-    private pushJsonSpec(hash: FileNameHash) {
+    private async pushJsonSpec(hash: FileNameHash) {
         try {
-            this.websocketServer.to(hash).emit(WebSocketEvents.fileUpdate, this.getFileContent(hash));
+            const jsonSpec = this.getFileContent(hash);
+            await this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
         } catch (e) {
             console.error(`get an error when pushing json spec to ui: %j`, e);
         }
