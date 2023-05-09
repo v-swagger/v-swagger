@@ -18,7 +18,7 @@ export class PathRewriter {
             // Define a regular expression that matches the text only if it's after `$ref:`
             const regex = new RegExp(`(^\\s*\\$ref:\\s*.*${rule.regex.source})`, 'gm');
             replacedYaml = replacedYaml.replace(regex, (_, p1) => {
-                console.info('rewriter: applying rewrite rules: "%s" -> "%s"', rule.regex, rule.value);
+                console.info('[path-rewriter]: applying rewrite rules: "%s" -> "%s"', rule.regex, rule.value);
                 // Replace the matched text only if it's after `$ref:`
                 return `${p1.replace(rule.regex, rule.value)}`;
             });
@@ -35,7 +35,7 @@ export class PathRewriter {
                 regex: new RegExp(key),
                 value: value,
             });
-            console.info('rewriter: rewrite rule created: "%s" ~> "%s"', key, value);
+            console.info('[path-rewriter]: rewrite rule created: "%s" -> "%s"', key, value);
         }
 
         return rules;

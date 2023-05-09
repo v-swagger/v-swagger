@@ -20,22 +20,36 @@ export class SwaggerParser {
             if (this.rewrite.isApplicable()) {
                 activatedYaml = this.rewrite.rewrite(activatedYaml);
             }
-            let schema = YAML.load(activatedYaml) as JSONSchema;
 
-            try {
-                this.resolveRefs(schema, dirname(fileName));
-                schema = await $RefParser.dereference(schema, { continueOnError: true });
-            } catch (e) {
-                console.error(`swagger parser: dereference failed due to %s`, e);
-            }
+            let schema = YAML.load(activatedYaml) as JSONSchema;
+            // try to dereference cross-file references.
+            schema = await this.dereference(schema, fileName);
+
             const hash = hashFileName(fileName);
             this.cache.set(hash, schema);
         } catch (e) {
-            console.error(`get an error when parsing yaml: %j`, e);
+            console.error(`[swagger-parser]: get an error when parsing yaml: %j`, e);
             throw e;
         }
     }
 
+    private async dereference(schema: JSONSchema, fileName: string): Promise<JSONSchema> {
+        try {
+            this.resolveRefs(schema, dirname(fileName));
+            schema = await $RefParser.dereference(schema, {
+                continueOnError: true,
+                dereference: {
+                    circular: false, // Don't allow circular $refs
+                },
+            });
+        } catch (e) {
+            console.error(`[swagger-parser]: dereference failed due to %s`, e);
+        }
+
+        return schema;
+    }
+
+    // resolve relative path to absolute path over the basePath
     private resolveRefs(schema: JSONSchema, basePath: string) {
         if (typeof schema !== 'object') {
             return;
@@ -46,7 +60,7 @@ export class SwaggerParser {
                 // fixme: maybe apply rewrite rules here?
                 schema[key] = this.resolveRefPath(basePath, value);
             } else {
-                this.resolveRefs(value as unknown as Record<string, string>, basePath);
+                this.resolveRefs(value as unknown as JSONSchema, basePath);
             }
         }
     }
@@ -55,6 +69,7 @@ export class SwaggerParser {
         if (ref.startsWith('#/')) {
             return ref;
         } else {
+            console.info(`[swagger-parser]: resolving path -> %s`, ref);
             return resolve(basePath, ref);
         }
     }

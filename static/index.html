@@ -113,19 +113,14 @@
                 const fileName = '%FILE_NAME%';
                 const fileNameHash = '%FILE_HASH%';
 
-                socket.emit(
-                    'load',
-                    {
-                        basename: fileName,
-                        fileNameHash: fileNameHash,
-                    },
-                    (jsonSpec) => {
-                        buildSwaggerUI(jsonSpec);
-                    }
-                );
+                // load json schema from server
+                socket.emit('load', {
+                    basename: fileName,
+                    fileNameHash: fileNameHash,
+                });
 
-                socket.on('update', function (jsonSpec) {
-                    console.info('on update event');
+                // listen on `push` event that server pushes json schema
+                socket.on('push', function (jsonSpec) {
                     buildSwaggerUI(jsonSpec);
                 });
             };

@@ -13,7 +13,7 @@ export class WebviewPanelPreviewer implements Previewer {
             // Open the URL in the webview panel
             panel.webview.html = this.getWebviewContent();
         } catch (e) {
-            console.error(`get an error when opening webview panel`);
+            console.error(`[webview-previewer]: get an error when opening webview panel`);
             throw e;
         }
     }
