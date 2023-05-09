@@ -8,7 +8,7 @@ export class BrowserPreviewer implements Previewer {
         try {
             await vscode.commands.executeCommand('vscode.open', this.uri);
         } catch (e) {
-            console.error(`get an error when opening Browser`);
+            console.error(`[browser-previewer]: get an error when opening Browser`);
             throw e;
         }
     }
