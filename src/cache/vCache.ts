@@ -9,4 +9,12 @@ export class VCache {
     public static set(hash: string, value: OpenAPI.Document) {
         VCache.cache.set(hash, value);
     }
+
+    public static delete(hash: string) {
+        VCache.cache.delete(hash);
+    }
+
+    public static has(hash: string): boolean {
+        return VCache.cache.has(hash);
+    }
 }

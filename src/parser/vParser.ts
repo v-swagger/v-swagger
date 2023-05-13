@@ -1,8 +1,7 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
-import { readFile } from 'fs/promises';
-import * as YAML from 'js-yaml';
-import { IJsonSchema, OpenAPI } from 'openapi-types';
-import { basename, dirname, resolve } from 'path';
+import * as _ from 'lodash';
+import { OpenAPI } from 'openapi-types';
+import { basename, dirname } from 'path';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
@@ -11,32 +10,52 @@ import { hashFileName } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
-    private rewriter: PathRewriter;
+    private seen: Set<FileNameHash> = new Set();
     private hash: FileNameHash;
-    constructor(rewriteConfig: RewriteConfig, readonly fileName: string) {
-        this.rewriter = new PathRewriter(rewriteConfig);
-        this.hash = hashFileName(fileName);
+    constructor(readonly rewriteConfig: RewriteConfig, readonly fileName: string) {
         this.registerFileChangeListener();
+        this.hash = hashFileName(fileName);
     }
 
     public async parse(): Promise<vscode.Uri> {
         try {
-            let activatedYaml = (await readFile(this.fileName)).toString();
-            if (this.rewriter.isApplicable()) {
-                activatedYaml = this.rewriter.rewrite(activatedYaml);
+            if (!VCache.has(this.hash)) {
+                await this.resolve(this.fileName);
+                // todo: watch change & notify subscribers
             }
-
-            const schema = YAML.load(activatedYaml) as OpenAPI.Document;
-
-            const parsedSchema = await this.dereference(schema);
-
-            VCache.set(this.hash, parsedSchema);
-
-            // todo: watch change & notify subscribers
-            return this.getPreviewUrl();
         } catch (e) {
             console.error(`[v-parser]: gets an error when parsing yaml: %j`, e);
-            throw e;
+        }
+        return this.getPreviewUrl();
+    }
+
+    private async resolve(fileName: string) {
+        const hash = hashFileName(fileName);
+        // the freshness is maintained by File Watcher
+        if (this.seen.has(hash) || VCache.has(hash)) {
+            return;
+        }
+        try {
+            // mark as resolved in advance nevertheless there is an error
+            this.seen.add(hash);
+            let parsedSchema = await SwaggerParser.parse(fileName);
+
+            const rewriter = new PathRewriter(this.rewriteConfig, fileName);
+            parsedSchema = rewriter.rewrite(parsedSchema);
+            for (const ref of rewriter.getAllRefs()) {
+                await this.resolve(ref);
+            }
+
+            // todo: circular detection
+
+            try {
+                this.dereferenceInternal(parsedSchema);
+                this.dereferenceExternal(parsedSchema);
+            } finally {
+                VCache.set(hash, parsedSchema);
+            }
+        } catch (e) {
+            console.error(`[v-parser]: gets an error when resolving %s: %j`, fileName, e);
         }
     }
 
@@ -50,6 +69,7 @@ export class VParser {
         );
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
+            VCache.delete(this.hash);
             console.info(`[v-parser]: file %s changed, notify clients`, uri);
             await this.parse();
             // todo: decouple from VServer later
@@ -63,10 +83,12 @@ export class VParser {
         return uri;
     }
 
-    private async dereference(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
+    private async dereferenceInternal(schema: OpenAPI.Document) {
         try {
-            this.resolveRefs(schema as unknown as IJsonSchema);
-            schema = await SwaggerParser.dereference(schema, {
+            await SwaggerParser.dereference(schema, {
+                resolve: {
+                    external: false,
+                },
                 dereference: {
                     circular: true,
                 },
@@ -74,31 +96,34 @@ export class VParser {
         } catch (e) {
             console.error(`[v-parser]: dereference failed due to %s`, e);
         }
-
-        return schema;
     }
-
-    private resolveRefs(schema: IJsonSchema) {
-        if (typeof schema !== 'object') {
-            return;
-        }
-
-        for (const [key, value] of Object.entries(schema)) {
-            if (key === '$ref') {
-                // fixme: maybe apply rewrite rules here?
-                schema[key] = this.resolveRefPath(value);
-            } else {
-                this.resolveRefs(value);
+    // dereference external
+    private dereferenceExternal(schema: OpenAPI.Document) {
+        try {
+            if (typeof schema !== 'object') {
+                return;
             }
-        }
-    }
 
-    private resolveRefPath(ref: string) {
-        if (ref.startsWith('#/')) {
-            return ref;
-        } else {
-            console.info(`[v-parser]: resolving path -> %s`, ref);
-            return resolve(dirname(this.fileName), ref);
+            for (const [key, value] of Object.entries(schema)) {
+                if (key === '$ref' && !key.startsWith('#/')) {
+                    const components = value.split('#/');
+                    const hash = hashFileName(components[0]);
+                    if (!VCache.has(hash)) {
+                        continue;
+                    } else {
+                        const refSchema = VCache.get(hash);
+                        const refPath = components[1].replaceAll('/', '.');
+                        const resolvedRef = _.get(refSchema, refPath);
+                        // @ts-expect-error TS(7053)
+                        delete schema.$ref;
+                        _.assign(schema, resolvedRef);
+                    }
+                } else {
+                    this.dereferenceExternal(value);
+                }
+            }
+        } catch (e) {
+            console.error(`[v-parser]: dereference failed due to %s`, e);
         }
     }
 }
