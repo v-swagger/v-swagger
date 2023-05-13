@@ -98,24 +98,6 @@ export class VServer {
         console.info(`[v-server]: server is stopping`);
     }
 
-    /*
-    private registerFileChangeListener(fileName: string) {
-        console.info(`[v-server]: create watcher for file - %s`, fileName);
-        // for files not in opened workspace folders, must be specified in such a RelativePattern way
-        // for files in opened workspace folders, this also works
-        const fileNameInRelativeWay = new vscode.RelativePattern(
-            vscode.Uri.file(dirname(fileName)),
-            basename(fileName)
-        );
-        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
-        watcher.onDidChange(async (uri) => {
-            console.info(`[v-server]: file %s changed, notify clients`, uri);
-            await this.swaggerParser.parse(fileName);
-            this.pushJsonSpec(hashFileName(fileName));
-        });
-    }
-     */
-
     public pushJsonSpec(hash: FileNameHash) {
         try {
             const jsonSpec = VCache.get(hash);

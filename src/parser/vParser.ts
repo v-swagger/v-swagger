@@ -33,7 +33,6 @@ export class VParser {
             VCache.set(this.hash, parsedSchema);
 
             // todo: watch change & notify subscribers
-            // this.registerFileChangeListener(this.this.fileName);
             return this.getPreviewUrl();
         } catch (e) {
             console.error(`[v-parser]: gets an error when parsing yaml: %j`, e);
