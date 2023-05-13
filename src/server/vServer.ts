@@ -116,7 +116,7 @@ export class VServer {
     }
      */
 
-    private pushJsonSpec(hash: FileNameHash) {
+    public pushJsonSpec(hash: FileNameHash) {
         try {
             const jsonSpec = VCache.get(hash);
             if (!jsonSpec) {

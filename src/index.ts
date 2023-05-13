@@ -13,10 +13,9 @@ export async function activate(context: vscode.ExtensionContext) {
         const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
             try {
                 const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
-                const vParser = new VParser(rewriteConfig);
-
                 const fileName = getActivatedFileName(vscode.window.activeTextEditor);
-                const uri = await vParser.parse(fileName);
+                const vParser = new VParser(rewriteConfig, fileName);
+                const uri = await vParser.parse();
 
                 const vClient = new VClient(uri);
                 await vClient.preview();
