@@ -1,21 +1,23 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { VClient } from './core/vClient';
-import { VServer } from './core/vServer';
+import { VClient } from './client/vClient';
+import { VParser } from './parser/vParser';
+import { VServer } from './server/vServer';
 import { getActivatedFileName } from './utils/fileUtil';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     try {
         console.info('v-swagger is activated');
         const vSever = VServer.getInstance();
         await vSever.start();
+
         const disposable = vscode.commands.registerCommand('v-swagger.preview', async () => {
             try {
+                const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
+                const vParser = new VParser(rewriteConfig);
+
                 const fileName = getActivatedFileName(vscode.window.activeTextEditor);
-                const uri = await vSever.serve(fileName);
+                const uri = await vParser.parse(fileName);
+
                 const vClient = new VClient(uri);
                 await vClient.preview();
             } catch (e) {
@@ -29,7 +31,6 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {
     const vSever = VServer.getInstance();
     vSever.stop();

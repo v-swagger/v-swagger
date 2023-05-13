@@ -1,13 +1,12 @@
 import express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
-import { basename, dirname, join } from 'path';
+import { join } from 'path';
 import { getPortPromise } from 'portfinder';
-import * as socketio from 'socket.io';
+import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
+import { VCache } from '../cache/vCache';
 import { FileNameHash } from '../types';
-import { hashFileName } from '../utils/fileUtil';
-import { SwaggerParser } from '../utils/swaggerParser';
 
 enum WebSocketEvents {
     connection = 'connection',
@@ -27,22 +26,18 @@ export class VServer {
     private host: string = DEFAULT_HOST;
     private port: number = DEFAULT_PORT;
     private httpServer: http.Server;
-    private websocketServer: socketio.Server;
+    private websocketServer: SocketServer;
 
     private serverRunning = false;
-    private swaggerParser: SwaggerParser;
 
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
 
-        const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
-        this.swaggerParser = new SwaggerParser(rewriteConfig);
-
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
 
-        this.websocketServer = new socketio.Server(this.httpServer);
+        this.websocketServer = new SocketServer(this.httpServer);
         this.initializeWebsocketServer();
     }
 
@@ -71,7 +66,7 @@ export class VServer {
     }
 
     private initializeWebsocketServer() {
-        this.websocketServer.on(WebSocketEvents.connection, (socket: socketio.Socket) => {
+        this.websocketServer.on(WebSocketEvents.connection, (socket: Socket) => {
             console.info(`[v-server]: on websocket connection event`);
             socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
@@ -93,24 +88,17 @@ export class VServer {
         }
     }
 
+    public getServerUri(): vscode.Uri {
+        return vscode.Uri.parse(`http://${this.host}:${this.port}`);
+    }
+
     public stop() {
         this.httpServer.close();
         this.serverRunning = false;
         console.info(`[v-server]: server is stopping`);
     }
 
-    public async serve(fileName: string): Promise<vscode.Uri> {
-        await this.swaggerParser.parse(fileName);
-        this.registerFileChangeListener(fileName);
-        const uri = vscode.Uri.joinPath(
-            vscode.Uri.parse(`http://${this.host}:${this.port}`),
-            hashFileName(fileName),
-            basename(fileName)
-        );
-        console.info(`[v-server]: serve page for %s at %s`, fileName, uri);
-        return uri;
-    }
-
+    /*
     private registerFileChangeListener(fileName: string) {
         console.info(`[v-server]: create watcher for file - %s`, fileName);
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
@@ -126,14 +114,15 @@ export class VServer {
             this.pushJsonSpec(hashFileName(fileName));
         });
     }
+     */
 
-    private async pushJsonSpec(hash: FileNameHash) {
+    private pushJsonSpec(hash: FileNameHash) {
         try {
-            const jsonSpec = this.swaggerParser.getByFileNameHash(hash);
+            const jsonSpec = VCache.get(hash);
             if (!jsonSpec) {
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
-            await this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
+            this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
         } catch (e) {
             console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
         }

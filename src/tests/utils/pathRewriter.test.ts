@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { PathRewriter } from '../../utils/pathRewriter';
+import { PathRewriter } from '../../parser/pathRewriter';
 
 describe('test pathRewriter', () => {
     it('should apply rewrite rules correctly', async () => {
