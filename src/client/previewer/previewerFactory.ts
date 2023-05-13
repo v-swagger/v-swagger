@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Previewer } from '../types';
+import { Previewer } from '../../types';
 import { BrowserPreviewer } from './browserPreviewer';
 import { WebviewPanelPreviewer } from './webviewPanelPreviewer';
 
