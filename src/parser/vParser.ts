@@ -19,6 +19,7 @@ export class VParser {
 
     public async parse(): Promise<vscode.Uri> {
         try {
+            this.seen.clear();
             if (!VCache.has(this.hash)) {
                 await this.resolve(this.fileName);
                 // todo: watch change & notify subscribers
