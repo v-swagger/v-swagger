@@ -1,5 +1,5 @@
 import { TextEditor } from 'vscode';
-import { getActivatedFileName, hashFileName } from '../../utils/fileUtil';
+import { getActivatedFileName, hashFileName, isExternal$Ref } from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
     it('should get an hash string', () => {
@@ -19,5 +19,11 @@ describe('test fileUtils', () => {
 
     it('should throw an error if editor is undefined', () => {
         expect(() => getActivatedFileName()).toThrow();
+    });
+
+    it('should check whether it is an external url correctly', () => {
+        expect(isExternal$Ref('$ref', '../catalog-shared/x.yaml#/path/to/User')).toBeTruthy();
+        expect(isExternal$Ref('name', '../catalog-shared/x.yaml#/path/to/User')).toBeFalsy();
+        expect(isExternal$Ref('$ref', '#/path/to/User')).toBeFalsy();
     });
 });
