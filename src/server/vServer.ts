@@ -7,6 +7,7 @@ import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { FileNameHash } from '../types';
+import { decycle } from '../utils/fileUtil';
 
 enum WebSocketEvents {
     connection = 'connection',
@@ -68,7 +69,7 @@ export class VServer {
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: Socket) => {
             console.info(`[v-server]: on websocket connection event`);
-            socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
+            socket.on(WebSocketEvents.load, (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
                 socket.join(hash);
@@ -101,10 +102,12 @@ export class VServer {
     public pushJsonSpec(hash: FileNameHash) {
         try {
             const jsonSpec = VCache.get(hash);
+            // decycle
+            const decycledSpec = JSON.parse(JSON.stringify(jsonSpec, decycle()));
             if (!jsonSpec) {
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
-            this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
+            this.websocketServer.to(hash).emit(WebSocketEvents.push, decycledSpec);
         } catch (e) {
             console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
         }

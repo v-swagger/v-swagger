@@ -27,5 +27,8 @@
     "[markdown]": {
         "editor.formatOnSave": false
     },
-    "cSpell.words": ["socketio"]
+    "cSpell.words": [
+        "decycle",
+        "socketio"
+    ]
 }

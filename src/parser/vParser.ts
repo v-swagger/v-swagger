@@ -45,18 +45,18 @@ export class VParser {
             for (const ref of rewriter.getAllRefs()) {
                 await this.resolve(ref);
             }
-
             // todo: circular detection
-
-            try {
-                this.dereferenceInternal(parsedSchema);
-                this.dereferenceExternal(parsedSchema);
-            } finally {
-                VCache.set(hash, parsedSchema);
-            }
+            const dereferenced = await this.dereference(parsedSchema);
+            VCache.set(hash, dereferenced);
         } catch (e) {
             console.error(`[v-parser]: gets an error when resolving %s: %j`, fileName, e);
         }
+    }
+
+    private async dereference(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
+        const decycled = await this.dereferenceInternal(schema);
+        this.dereferenceExternal(decycled, new WeakSet());
+        return decycled;
     }
 
     private registerFileChangeListener() {
@@ -83,9 +83,9 @@ export class VParser {
         return uri;
     }
 
-    private async dereferenceInternal(schema: OpenAPI.Document) {
+    private async dereferenceInternal(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
         try {
-            await SwaggerParser.dereference(schema, {
+            const dereferenced = await SwaggerParser.dereference(schema, {
                 resolve: {
                     external: false,
                 },
@@ -93,19 +93,23 @@ export class VParser {
                     circular: true,
                 },
             });
+            return SwaggerParser.bundle(dereferenced);
         } catch (e) {
-            console.error(`[v-parser]: dereference failed due to %s`, e);
+            console.error(`[v-parser]: dereference internal reference failed due to %s`, e);
+            throw e;
         }
     }
+
     // dereference external
-    private dereferenceExternal(schema: OpenAPI.Document) {
+    private dereferenceExternal(schema: OpenAPI.Document, resolved: WeakSet<OpenAPI.Document>) {
         try {
-            if (typeof schema !== 'object') {
-                return;
+            if (!_.isObject(schema) || resolved.has(schema)) {
+                return schema;
             }
+            resolved.add(schema);
 
             for (const [key, value] of Object.entries(schema)) {
-                if (key === '$ref' && !key.startsWith('#/')) {
+                if (key === '$ref' && !value.startsWith('#/')) {
                     const components = value.split('#/');
                     const hash = hashFileName(components[0]);
                     if (!VCache.has(hash)) {
@@ -115,15 +119,17 @@ export class VParser {
                         const refPath = components[1].replaceAll('/', '.');
                         const resolvedRef = _.get(refSchema, refPath);
                         // @ts-expect-error TS(7053)
-                        delete schema.$ref;
+                        delete schema[key];
                         _.assign(schema, resolvedRef);
+                        console.log(`key: $ref -> value: %s`, value);
                     }
                 } else {
-                    this.dereferenceExternal(value);
+                    this.dereferenceExternal(value, resolved);
+                    console.log('always here: %s', JSON.stringify(value));
                 }
             }
         } catch (e) {
-            console.error(`[v-parser]: dereference failed due to %s`, e);
+            console.error(`[v-parser]: dereference external reference failed due to %s`, e);
         }
     }
 }
