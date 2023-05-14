@@ -11,10 +11,6 @@ export class PathRewriter {
         this.rewriteRules = this.parseRewriteRules(rewriteConfig);
     }
 
-    public isApplicable(): boolean {
-        return this.rewriteRules.length > 0;
-    }
-
     // apply path rewrite rules firstly and resolve relative url to absolute url
     public rewrite(schema: OpenAPI.Document): OpenAPI.Document {
         return _.mergeWith({}, schema, (never: never, ref: string, key: string) => {
