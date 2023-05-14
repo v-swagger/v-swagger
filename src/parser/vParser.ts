@@ -54,9 +54,9 @@ export class VParser {
     }
 
     private async dereference(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
-        const decycled = await this.dereferenceInternal(schema);
-        this.dereferenceExternal(decycled, new WeakSet());
-        return decycled;
+        const dereferenced = await this.dereferenceInternal(schema);
+        this.dereferenceExternal(dereferenced, new WeakSet());
+        return dereferenced;
     }
 
     private async dereferenceInternal(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
@@ -66,7 +66,7 @@ export class VParser {
                     external: false,
                 },
                 dereference: {
-                    circular: true,
+                    circular: 'ignore',
                 },
             });
         } catch (e) {
@@ -84,6 +84,7 @@ export class VParser {
             resolved.add(schema);
 
             for (const [key, value] of Object.entries(schema)) {
+                // todo: common this func
                 if (key === '$ref' && !value.startsWith('#/')) {
                     const components = value.split('#/');
                     const hash = hashFileName(components[0]);
