@@ -2,6 +2,14 @@
 
 View Swagger (v-swagger) is a VS Code extension that is able to parse and preview Swagger/OpenAPI definition locally either in VS Code Webview panel or Browsers.
 
+## Usage
+
+Only internal installation is supported now:
+![install](docs/images/install-from-file.png)
+
+Preview:
+![preview](docs/images/v-swagger-usage.gif)
+
 ## Development
 
 ```shell
