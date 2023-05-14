@@ -59,33 +59,9 @@ export class VParser {
         return decycled;
     }
 
-    private registerFileChangeListener() {
-        console.info(`[v-parser]: create watcher for file - %s`, this.fileName);
-        // for files not in opened workspace folders, must be specified in such a RelativePattern way
-        // for files in opened workspace folders, this also works
-        const fileNameInRelativeWay = new vscode.RelativePattern(
-            vscode.Uri.file(dirname(this.fileName)),
-            basename(this.fileName)
-        );
-        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
-        watcher.onDidChange(async (uri) => {
-            VCache.delete(this.hash);
-            console.info(`[v-parser]: file %s changed, notify clients`, uri);
-            await this.parse();
-            // todo: decouple from VServer later
-            VServer.getInstance().pushJsonSpec(this.hash);
-        });
-    }
-
-    private getPreviewUrl(): vscode.Uri {
-        const uri = vscode.Uri.joinPath(VServer.getInstance().getServerUri(), this.hash, basename(this.fileName));
-        console.info(`[v-parser]: VServer serves page for %s at %s`, this.fileName, uri);
-        return uri;
-    }
-
     private async dereferenceInternal(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
         try {
-            const dereferenced = await SwaggerParser.dereference(schema, {
+            return await SwaggerParser.dereference(schema, {
                 resolve: {
                     external: false,
                 },
@@ -93,7 +69,6 @@ export class VParser {
                     circular: true,
                 },
             });
-            return SwaggerParser.bundle(dereferenced);
         } catch (e) {
             console.error(`[v-parser]: dereference internal reference failed due to %s`, e);
             throw e;
@@ -121,15 +96,37 @@ export class VParser {
                         // @ts-expect-error TS(7053)
                         delete schema[key];
                         _.assign(schema, resolvedRef);
-                        console.log(`key: $ref -> value: %s`, value);
                     }
                 } else {
                     this.dereferenceExternal(value, resolved);
-                    console.log('always here: %s', JSON.stringify(value));
                 }
             }
         } catch (e) {
             console.error(`[v-parser]: dereference external reference failed due to %s`, e);
         }
+    }
+
+    private registerFileChangeListener() {
+        console.info(`[v-parser]: create watcher for file - %s`, this.fileName);
+        // for files not in opened workspace folders, must be specified in such a RelativePattern way
+        // for files in opened workspace folders, this also works
+        const fileNameInRelativeWay = new vscode.RelativePattern(
+            vscode.Uri.file(dirname(this.fileName)),
+            basename(this.fileName)
+        );
+        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
+        watcher.onDidChange(async (uri) => {
+            VCache.delete(this.hash);
+            console.info(`[v-parser]: file %s changed, notify clients`, uri);
+            await this.parse();
+            // todo: decouple from VServer later
+            VServer.getInstance().pushJsonSpec(this.hash);
+        });
+    }
+
+    private getPreviewUrl(): vscode.Uri {
+        const uri = vscode.Uri.joinPath(VServer.getInstance().getServerUri(), this.hash, basename(this.fileName));
+        console.info(`[v-parser]: VServer serves page for %s at %s`, this.fileName, uri);
+        return uri;
     }
 }
