@@ -2,7 +2,7 @@
     "name": "v-swagger",
     "displayName": "v-swagger",
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
-    "version": "0.0.2",
+    "version": "1.0.0",
     "engines": {
         "vscode": "^1.70.0",
         "node": "^18.13.0",
