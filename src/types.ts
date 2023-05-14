@@ -5,3 +5,5 @@ export interface Previewer {
 }
 
 export type RewriteConfig = Record<string, string>;
+
+export type $RefSchema = { $ref?: string };

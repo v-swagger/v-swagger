@@ -5,8 +5,8 @@ import { basename, dirname } from 'path';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
-import { FileNameHash, RewriteConfig } from '../types';
-import { hashFileName } from '../utils/fileUtil';
+import { $RefSchema, FileNameHash, RewriteConfig } from '../types';
+import { hashFileName, isExternal$Ref } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
@@ -45,7 +45,6 @@ export class VParser {
             for (const ref of rewriter.getAllRefs()) {
                 await this.resolve(ref);
             }
-            // todo: circular detection
             const dereferenced = await this.dereference(parsedSchema);
             VCache.set(hash, dereferenced);
         } catch (e) {
@@ -85,19 +84,8 @@ export class VParser {
 
             for (const [key, value] of Object.entries(schema)) {
                 // todo: common this func
-                if (key === '$ref' && !value.startsWith('#/')) {
-                    const components = value.split('#/');
-                    const hash = hashFileName(components[0]);
-                    if (!VCache.has(hash)) {
-                        continue;
-                    } else {
-                        const refSchema = VCache.get(hash);
-                        const refPath = components[1].replaceAll('/', '.');
-                        const resolvedRef = _.get(refSchema, refPath);
-                        // @ts-expect-error TS(7053)
-                        delete schema[key];
-                        _.assign(schema, resolvedRef);
-                    }
+                if (isExternal$Ref(key, value)) {
+                    this.resolveExternal$Ref(schema as unknown as $RefSchema, value);
                 } else {
                     this.dereferenceExternal(value, resolved);
                 }
@@ -105,6 +93,19 @@ export class VParser {
         } catch (e) {
             console.error(`[v-parser]: dereference external reference failed due to %s`, e);
         }
+    }
+
+    private resolveExternal$Ref(schema: $RefSchema, value: string) {
+        const components = value.split('#/');
+        const hash = hashFileName(components[0]);
+        if (!VCache.has(hash)) {
+            return;
+        }
+        const refSchema = VCache.get(hash);
+        const refPath = components[1].replaceAll('/', '.');
+        const resolvedRef = _.get(refSchema, refPath);
+        delete schema.$ref;
+        _.assign(schema, resolvedRef);
     }
 
     private registerFileChangeListener() {

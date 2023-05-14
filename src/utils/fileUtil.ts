@@ -13,3 +13,13 @@ export function getActivatedFileName(editor?: vscode.TextEditor) {
     assert(editor);
     return editor.document.fileName;
 }
+
+/**
+ * check whether the given key-value pair is an external reference
+ * @param key
+ * @param ref
+ * @returns
+ */
+export function isExternal$Ref(key: string, ref: string): boolean {
+    return key === '$ref' && !ref.startsWith('#/');
+}

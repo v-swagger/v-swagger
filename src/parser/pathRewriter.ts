@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
 import { RewriteConfig } from '../types';
+import { isExternal$Ref } from '../utils/fileUtil';
 
 type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
@@ -16,27 +17,26 @@ export class PathRewriter {
         return _.mergeWith({}, schema, (never: never, ref: string, key: string) => {
             let rewritten: string = ref;
 
-            if (key === '$ref' && !ref.startsWith('#/')) {
-                // TBD: apply all rules or only apply one of them?
-                for (const rule of this.rewriteRules) {
-                    rewritten = rewritten.replace(rule.regex, rule.value);
-                }
-                console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
-                const absoluteRef = path.resolve(path.dirname(this.fileName), rewritten);
-
-                const hashIndex = absoluteRef.indexOf('#');
-                if (hashIndex < 0) {
-                    console.error(`[v-rewriter]: invalid reference - %s`, rewritten);
-                } else {
-                    // collect all references
-                    this.refSet.add(absoluteRef.slice(0, hashIndex));
-                }
-
-                return absoluteRef;
-            } else {
+            if (!isExternal$Ref(key, ref)) {
                 // undefined uses default merge handling - used for all others properties
                 return undefined;
             }
+
+            for (const rule of this.rewriteRules) {
+                rewritten = rewritten.replace(rule.regex, rule.value);
+            }
+            console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
+            const absoluteRef = path.resolve(path.dirname(this.fileName), rewritten);
+
+            const hashIndex = absoluteRef.indexOf('#');
+            if (hashIndex < 0) {
+                console.error(`[v-rewriter]: invalid reference - %s`, rewritten);
+            } else {
+                // collect all references
+                this.refSet.add(absoluteRef.slice(0, hashIndex));
+            }
+
+            return absoluteRef;
         });
     }
 
