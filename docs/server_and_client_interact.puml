@@ -2,24 +2,62 @@
 
 actor User as u
 entity VSCode as v
-entity vswagger_server as s
-entity vswagger_client as c
+entity VServer as s
+entity VParser as p
+entity VCache as a
+entity VClient as c
 entity Browser as b
 
-alt 
-else Start Preview
-  u -> v: click Preview Swagger
-  v -> v: activate v-swagger extension
-  v -> s: create and start vswagger server 
-  s -> s: parse swagger json object from \n counter yaml file\nsave to cache with file name hash
-  s --> v: return counter swagger page URI
-  v -> c: provide swagger page URI
-  c -> b: open the page
-  b --> c: ok
-  c --> v: ok 
-  b -> s: send load event with file name hash
-  s --> b: response with swagger json object
-  b -> b: render swagger ui with data 
+alt V-Swagger
+
+  alt #Application STEP 1 Create Server
+    u -> v: click Preview Swagger
+    v -> v: activate v-swagger extension
+    v -> s: create and start server\nwhich works as singleton 
+    s -> s: initialize websocket server with \nspedified port from config
+    s --> v: server started
+  end
+
+  alt #Business STEP 2 Parse Swagger
+    v -> p: parse
+    p -> v: register file change watcher
+    v --> p: ok
+    p -> p: parse swagger json object\nfrom active yaml file\nwith rewrite config applied
+    p -> a: save parsed object \nby file name hash key
+    a -->p : ok
+    p --> v: uri for swagger page
+  end
+
+  alt #Implementation STEP 3 Create Client
+    v -> c: create client with\nprovided uri
+    c -> b: open uri in \ninner browser or chrome\naccording to config
+    b --> c: ok
+    c --> v: ok 
+  end
+
+  alt STEP 4 Browser Server Interactions
+  else #Physical on brower open
+    b -> s: create webocket connection
+    s --> b: ok
+    b -> b: listen on push event
+    b -> s: send load event with file name hash
+    s --> b: response with swagger json object
+    b -> b: render swagger ui with data 
+  else #Technology on file change
+    v -> p: file changes
+    p -> a: delete cache
+    a --> p: ok
+    p -> p: parse swagger json object\nfrom given file path\nwith rewrite config applied
+    p -> a: save parsed object \nby file name hash key
+    a --> p : ok
+    p -> s: push change
+    s -> b: send push event \nwith new swagge object
+    b -> b: render swagger ui with new data 
+  end
+
+  u -> b: test api
+  b --> u: have fun
+
 end
 
 @enduml
