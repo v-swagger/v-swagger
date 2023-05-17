@@ -39,6 +39,7 @@ describe('test pathRewriter', () => {
             },
         } as unknown as OpenAPI.Document;
         const rewrittenSchema = pathRewriter.rewrite(testSchema);
+        console.log('rewrite schema is: %j', rewrittenSchema);
         expect(rewrittenSchema).toEqual(expectedSchema);
         expect(pathRewriter.getAllRefs().sort()).toEqual(
             [

@@ -35,9 +35,18 @@ export class PathRewriter {
                 rewritten = rewritten.replace(rule.regex, rule.value);
             }
             console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
-            const fullPath = path.dirname(this.fileName) + path.sep + rewritten;
+            const fileDir = path.dirname(this.fileName);
+            // if files are located in root directory, no dir splitter is needed
+            const fullPath = fileDir === '/' ? path.sep + rewritten : fileDir + path.sep + rewritten;
             const { absolutePath, hashPath } = normalize$Ref(fullPath);
             const isInternal = absolutePath === this.fileName;
+            console.info(
+                `[v-rewriter]: fullPath: %s, \n absolutePath: %s, \n hashPath: %s, \n fileName: %s`,
+                fullPath,
+                absolutePath,
+                hashPath,
+                this.fileName
+            );
             if (!isInternal) {
                 // collect all references
                 this.refSet.add(absolutePath);
