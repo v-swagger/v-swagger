@@ -1,24 +1,24 @@
 name: Testing
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
 
 jobs:
-  build:
-    runs-on: ${{matrix.os}}
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        node-version: [ 18.x ]
+    build:
+        runs-on: ${{matrix.os}}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                node-version: [18.x]
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js v18
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - run: npm ci
-      - run: npm run test
+        steps:
+            - uses: actions/checkout@v3
+            - name: Use Node.js v18
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '18.x'
+            - run: npm ci
+            - run: npm run test
