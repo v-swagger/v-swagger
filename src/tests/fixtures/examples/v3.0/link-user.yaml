@@ -1,31 +1,31 @@
 openapi: 3.0.0
-info: 
-  title: Users
-  version: 1.0.0
+info:
+    title: Users
+    version: 1.0.0
 paths: {}
 components:
-  links:
-    UserRepositories:
-      # returns array of '#/components/schemas/repository'
-      operationId: getRepositoriesByOwner
-      parameters:
-        username: $response.body#/username
-    UserRepository:
-      # returns '#/components/schemas/repository'
-      operationId: getRepository
-      parameters:
-        username: $response.body#/owner/username
-        slug: $response.body#/slug
-    RepositoryPullRequests:
-      # returns '#/components/schemas/pullrequest'
-      operationId: getPullRequestsByRepository
-      parameters: 
-          username: $response.body#/owner/username
-          slug: $response.body#/slug
-    PullRequestMerge:
-      # executes /2.0/repositories/{username}/{slug}/pullrequests/{pid}/merge
-      operationId: mergePullRequest
-      parameters:
-        username: $response.body#/author/username
-        slug: $response.body#/repository/slug
-        pid: $response.body#/id
+    links:
+        UserRepositories:
+            # returns array of '#/components/schemas/repository'
+            operationId: getRepositoriesByOwner
+            parameters:
+                username: $response.body#/username
+        UserRepository:
+            # returns '#/components/schemas/repository'
+            operationId: getRepository
+            parameters:
+                username: $response.body#/owner/username
+                slug: $response.body#/slug
+        RepositoryPullRequests:
+            # returns '#/components/schemas/pullrequest'
+            operationId: getPullRequestsByRepository
+            parameters:
+                username: $response.body#/owner/username
+                slug: $response.body#/slug
+        PullRequestMerge:
+            # executes /2.0/repositories/{username}/{slug}/pullrequests/{pid}/merge
+            operationId: mergePullRequest
+            parameters:
+                username: $response.body#/author/username
+                slug: $response.body#/repository/slug
+                pid: $response.body#/id
