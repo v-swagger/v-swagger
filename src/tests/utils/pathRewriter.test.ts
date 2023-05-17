@@ -27,13 +27,13 @@ describe('test pathRewriter', () => {
 
         const expectedSchema = {
             '401': {
-                $ref: path.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized'),
+                $ref: path.posix.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized'),
             },
             '404': {
-                $ref: path.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/NotFound'),
+                $ref: path.posix.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/NotFound'),
             },
             '500': {
-                $ref: path.resolve(
+                $ref: path.posix.resolve(
                     '/catalog-enrichment/spec/enrichment.yaml#/components/responses/InternalServerError'
                 ),
             },
@@ -42,8 +42,8 @@ describe('test pathRewriter', () => {
         expect(rewrittenSchema).toEqual(expectedSchema);
         expect(pathRewriter.getAllRefs().sort()).toEqual(
             [
-                path.resolve('/catalog-enrichment/spec/enrichment.yaml'),
-                path.resolve('/catalog-shared/spec/catalog-shared.yaml'),
+                path.posix.resolve('/catalog-enrichment/spec/enrichment.yaml'),
+                path.posix.resolve('/catalog-shared/spec/catalog-shared.yaml'),
             ].sort()
         );
     });

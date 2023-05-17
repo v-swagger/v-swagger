@@ -7,3 +7,5 @@ export interface Previewer {
 export type RewriteConfig = Record<string, string>;
 
 export type $RefSchema = { $ref?: string };
+
+export type Normalized$Ref = { absolutePath: string; hashPath: string };
