@@ -50,7 +50,7 @@ Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started
 
 ![](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/LangInteger/learning/master/draw/swagger/client_and_server_interact.puml)
 
-## Why I develop a Swagger Viewer from scrach
+## Why I create v-swagger from scrach
 
 A couple of weeks ago, in order to meet the special needs of my project, I extended a path rewrite function to [Intelliji Swagger](https://github.com/zalando/intellij-swagger) consumed by Webstorm.
 Unfortunately, WebStorm is very slow in my daily use and can't guarantee my development efficiency. Therefore, I switched from WebStorm to VS Code recently. Although VS Code has many shortcomings compared to IntelliJ products, its Remote development function has greatly improved my development efficiency. Therefore, I need a VS Code extension similar to [intellij-swagger](https://github.com/zalando/intellij-swagger). At present, the two popular extensions to preview Swagger/OpenAPI definition.
