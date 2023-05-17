@@ -1,5 +1,5 @@
 import { TextEditor } from 'vscode';
-import { getActivatedFileName, hashFileName, isExternal$Ref, REF_HASH_SEPARATOR } from '../../utils/fileUtil';
+import { getActivatedFileName, hashFileName, isValid$Ref, REF_HASH_SEPARATOR } from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
     it('should get an hash string', () => {
@@ -22,9 +22,13 @@ describe('test fileUtils', () => {
     });
 
     it('should check whether it is an external url correctly', () => {
-        expect(isExternal$Ref('$ref', './catalog-shared/x.yaml#/path/to/User')).toBeTruthy();
-        expect(isExternal$Ref('name', './catalog-shared/x.yaml#/path/to/User')).toBeFalsy();
-        expect(isExternal$Ref('$ref', `${REF_HASH_SEPARATOR}path/to/User`)).toBeFalsy();
-        expect(isExternal$Ref('$ref', {})).toBeFalsy();
+        expect(isValid$Ref('$ref', `./catalog-shared/x.yaml${REF_HASH_SEPARATOR}path/to/User`)).toBeTruthy();
+        expect(isValid$Ref('name', `./catalog-shared/x.yaml${REF_HASH_SEPARATOR}path/to/User`)).toBeFalsy();
+        expect(isValid$Ref('$ref', `${REF_HASH_SEPARATOR}path/to/User`)).toBeTruthy();
+        expect(isValid$Ref('$ref', `path/to/User`)).toBeFalsy();
+        expect(isValid$Ref('$ref', {})).toBeFalsy();
+        expect(
+            isValid$Ref('$ref', `c:\\Users\\pylon\\spec\\${REF_HASH_SEPARATOR}components\\schemas\\AllSystemsResponse`)
+        ).toBeTruthy();
     });
 });

@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
 import { RewriteConfig } from '../types';
-import { isExternal$Ref } from '../utils/fileUtil';
+import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
 
 type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
@@ -26,7 +26,7 @@ export class PathRewriter {
         return _.mergeWith({}, schema, (never: never, ref: string, key: string) => {
             let rewritten: string = ref;
 
-            if (!isExternal$Ref(key, ref)) {
+            if (!isValid$Ref(key, ref) || isInternal$Ref(key, ref)) {
                 // undefined uses default merge handling - used for all others properties
                 return undefined;
             }
@@ -35,17 +35,15 @@ export class PathRewriter {
                 rewritten = rewritten.replace(rule.regex, rule.value);
             }
             console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
-            const absoluteRef = path.resolve(path.dirname(this.fileName), rewritten);
-
-            const hashIndex = absoluteRef.indexOf('#');
-            if (hashIndex < 0) {
-                console.error(`[v-rewriter]: invalid reference - %s`, rewritten);
-            } else {
+            const fullPath = path.posix.resolve(path.dirname(this.fileName), rewritten);
+            const { absolutePath, hashPath } = normalize$Ref(fullPath);
+            const isInternal = absolutePath === this.fileName;
+            if (!isInternal) {
                 // collect all references
-                this.refSet.add(absoluteRef.slice(0, hashIndex));
+                this.refSet.add(absolutePath);
             }
 
-            return absoluteRef;
+            return isInternal ? `${REF_HASH_SEPARATOR}${hashPath}` : fullPath;
         });
     }
 
