@@ -67,7 +67,7 @@
         "format": "npx prettier --write .",
         "format:check": "npx prettier --check .",
         "pretest": "npm run compile && npm run lint",
-        "test": "npx jest --maxWorkers=4 --logHeapUsage --coverage --coverageThreshold '{}' --forceExit",
+        "test": "npx jest --maxWorkers=4 --logHeapUsage --coverage --coverageThreshold '{}' --forceExit --detectOpenHandles",
         "prepare": "husky install",
         "package": "npx vsce package"
     },

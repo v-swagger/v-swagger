@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { OpenAPI } from 'openapi-types';
+import path from 'path';
 import { PathRewriter } from '../../parser/pathRewriter';
 
 describe('test pathRewriter', () => {
@@ -26,16 +27,24 @@ describe('test pathRewriter', () => {
 
         const expectedSchema = {
             '401': {
-                $ref: '/catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized',
+                $ref: path.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized'),
             },
             '404': {
-                $ref: '/catalog-shared/spec/catalog-shared.yaml#/components/responses/NotFound',
+                $ref: path.resolve('/catalog-shared/spec/catalog-shared.yaml#/components/responses/NotFound'),
             },
             '500': {
-                $ref: '/catalog-enrichment/spec/enrichment.yaml#/components/responses/InternalServerError',
+                $ref: path.resolve(
+                    '/catalog-enrichment/spec/enrichment.yaml#/components/responses/InternalServerError'
+                ),
             },
         } as unknown as OpenAPI.Document;
         const rewrittenSchema = pathRewriter.rewrite(testSchema);
         expect(rewrittenSchema).toEqual(expectedSchema);
+        expect(pathRewriter.getAllRefs().sort()).toEqual(
+            [
+                path.resolve('/catalog-enrichment/spec/enrichment.yaml'),
+                path.resolve('/catalog-shared/spec/catalog-shared.yaml'),
+            ].sort()
+        );
     });
 });

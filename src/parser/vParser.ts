@@ -1,17 +1,18 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
 import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
-import { basename, dirname } from 'path';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
 import { $RefSchema, FileNameHash, RewriteConfig } from '../types';
-import { hashFileName, isExternal$Ref } from '../utils/fileUtil';
+import { hashFileName, isExternal$Ref, REF_HASH_SEPARATOR } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
     private seen: Set<FileNameHash> = new Set();
-    private hash: FileNameHash;
+    private readonly hash: FileNameHash;
+
     constructor(readonly rewriteConfig: RewriteConfig, readonly fileName: string) {
         this.registerFileChangeListener();
         this.hash = hashFileName(fileName);
@@ -76,7 +77,7 @@ export class VParser {
     }
 
     // dereference external
-    private dereferenceExternal(schema: OpenAPI.Document, resolved: WeakSet<OpenAPI.Document>) {
+    private dereferenceExternal(schema: object, resolved: WeakSet<object>) {
         try {
             if (!_.isObject(schema) || resolved.has(schema)) {
                 return schema;
@@ -84,9 +85,8 @@ export class VParser {
             resolved.add(schema);
 
             for (const [key, value] of Object.entries(schema)) {
-                // todo: common this func
                 if (isExternal$Ref(key, value)) {
-                    this.resolveExternal$Ref(schema as unknown as $RefSchema, value);
+                    this.resolveExternal$Ref(schema, value);
                 } else {
                     this.dereferenceExternal(value, resolved);
                 }
@@ -97,13 +97,13 @@ export class VParser {
     }
 
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
-        const components = value.split('#/');
+        const components = value.split(REF_HASH_SEPARATOR);
         const hash = hashFileName(components[0]);
         if (!VCache.has(hash)) {
             return;
         }
         const refSchema = VCache.get(hash);
-        const refPath = components[1].replaceAll('/', '.');
+        const refPath = components[1].replaceAll(path.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
         delete schema.$ref;
         _.assign(schema, resolvedRef);
@@ -114,8 +114,8 @@ export class VParser {
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
         const fileNameInRelativeWay = new vscode.RelativePattern(
-            vscode.Uri.file(dirname(this.fileName)),
-            basename(this.fileName)
+            vscode.Uri.file(path.dirname(this.fileName)),
+            path.basename(this.fileName)
         );
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
@@ -128,7 +128,7 @@ export class VParser {
     }
 
     private getPreviewUrl(): vscode.Uri {
-        const uri = vscode.Uri.joinPath(VServer.getInstance().getServerUri(), this.hash, basename(this.fileName));
+        const uri = vscode.Uri.joinPath(VServer.getInstance().getServerUri(), this.hash, path.basename(this.fileName));
         console.info(`[v-parser]: VServer serves page for %s at %s`, this.fileName, uri);
         return uri;
     }
