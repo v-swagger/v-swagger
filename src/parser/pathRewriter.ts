@@ -12,7 +12,16 @@ export class PathRewriter {
         this.rewriteRules = this.parseRewriteRules(rewriteConfig);
     }
 
-    // apply path rewrite rules firstly and resolve relative url to absolute url
+    /**
+     * apply path rewrite rules firstly and resolve relative url to absolute url
+     * Note: on Windows, both the forward slash (/) and backward slash (\) are accepted as path segment separators;
+     * however, the path methods only add backward slashes (\).
+     * the resolved path looks like:
+     *  - on Windows: "D:\\catalog-shared\\spec\\catalog-shared.yaml#\\components\\responses\\Unauthorized" on Windows
+     *  - on POSIX: "/catalog-shared/spec/catalog-shared.yaml#/components/responses/Unauthorized"
+     * @param schema
+     * @returns
+     */
     public rewrite(schema: OpenAPI.Document): OpenAPI.Document {
         return _.mergeWith({}, schema, (never: never, ref: string, key: string) => {
             let rewritten: string = ref;
