@@ -102,7 +102,7 @@ export class VParser {
             return;
         }
         const refSchema = VCache.get(hash);
-        const refPath = hashPath.replaceAll(path.sep, '.');
+        const refPath = hashPath.replaceAll(path.posix.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
         delete schema.$ref;
         _.assign(schema, resolvedRef);
