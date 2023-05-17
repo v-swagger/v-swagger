@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
 import { $RefSchema, FileNameHash, RewriteConfig } from '../types';
-import { hashFileName, isExternal$Ref, REF_HASH_SEPARATOR } from '../utils/fileUtil';
+import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
@@ -50,7 +50,7 @@ export class VParser {
             const dereferenced = await this.dereference(parsedSchema);
             VCache.set(hash, dereferenced);
         } catch (e) {
-            console.error(`[v-parser]: gets an error when resolving %s: %j`, fileName, e);
+            console.error(`[v-parser]: gets an error when resolving %s: %o`, fileName, e);
         }
     }
 
@@ -76,7 +76,6 @@ export class VParser {
         }
     }
 
-    // dereference external
     private dereferenceExternal(schema: object, resolved: WeakSet<object>) {
         try {
             if (!_.isObject(schema) || resolved.has(schema)) {
@@ -85,7 +84,7 @@ export class VParser {
             resolved.add(schema);
 
             for (const [key, value] of Object.entries(schema)) {
-                if (isExternal$Ref(key, value)) {
+                if (isValid$Ref(key, value) && !isInternal$Ref(key, value)) {
                     this.resolveExternal$Ref(schema, value);
                 } else {
                     this.dereferenceExternal(value, resolved);
@@ -97,13 +96,13 @@ export class VParser {
     }
 
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
-        const components = value.split(REF_HASH_SEPARATOR);
-        const hash = hashFileName(components[0]);
+        const { absolutePath, hashPath } = normalize$Ref(value);
+        const hash = hashFileName(absolutePath);
         if (!VCache.has(hash)) {
             return;
         }
         const refSchema = VCache.get(hash);
-        const refPath = components[1].replaceAll(path.sep, '.');
+        const refPath = hashPath.replaceAll(path.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
         delete schema.$ref;
         _.assign(schema, resolvedRef);
