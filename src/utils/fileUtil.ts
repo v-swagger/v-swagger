@@ -1,6 +1,10 @@
 import assert from 'assert';
 import * as crypto from 'crypto';
 import * as vscode from 'vscode';
+import * as _ from 'lodash';
+import path from 'path';
+
+export const REF_HASH_SEPARATOR = `#${path.sep}`;
 
 export function hashFileName(fileName: string): string {
     return crypto.createHash('md5').update(fileName).digest('hex').slice(0, 8);
@@ -20,6 +24,6 @@ export function getActivatedFileName(editor?: vscode.TextEditor) {
  * @param ref
  * @returns
  */
-export function isExternal$Ref(key: string, ref: string): boolean {
-    return key === '$ref' && !ref.startsWith('#/');
+export function isExternal$Ref(key: string, ref: unknown): ref is string {
+    return _.isString(ref) && key === '$ref' && !ref.startsWith(REF_HASH_SEPARATOR);
 }
