@@ -1,5 +1,6 @@
 import assert from 'assert';
 import * as crypto from 'crypto';
+import express from 'express';
 import * as _ from 'lodash';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -62,4 +63,26 @@ export function normalize$Ref(fullPath: string): Normalized$Ref {
         absolutePath: components[0],
         hashPath: components[1],
     };
+}
+
+/**
+ * Determine whether cache revalidation is required according to HTTP cache relevant headers.
+ * @param headers The HTTP headers object from the Express request.
+ * @returns A boolean indicating whether cache revalidation is required.
+ */
+export function isRevalidationRequired(headers: express.Request['headers']): boolean {
+    // Extract the cache-relevant headers
+    const {
+        'cache-control': cacheControl, // HTTP/1.1
+        pragma: pragma, // HTTP/1.0
+    } = headers;
+
+    // According to https://tools.ietf.org/html/rfc2616#section-14.9.4
+    // must-revalidate is not considered. I think that's scoped out in this project.
+    const hasCacheControlNoCache = cacheControl?.includes('no-cache');
+    const hasCacheControlMaxAgeZero = cacheControl?.includes('max-age=0');
+    const hasPragmaNoCache = pragma === 'no-cache';
+
+    // Determine if cache revalidation is required
+    return hasCacheControlNoCache || hasCacheControlMaxAgeZero || hasPragmaNoCache;
 }

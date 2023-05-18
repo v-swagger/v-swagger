@@ -1,5 +1,12 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { TextEditor } from 'vscode';
-import { getActivatedFileName, hashFileName, isValid$Ref, REF_HASH_SEPARATOR } from '../../utils/fileUtil';
+import {
+    getActivatedFileName,
+    hashFileName,
+    isRevalidationRequired,
+    isValid$Ref,
+    REF_HASH_SEPARATOR,
+} from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
     it('should get an hash string', () => {
@@ -30,5 +37,12 @@ describe('test fileUtils', () => {
         expect(
             isValid$Ref('$ref', `c:\\Users\\pylon\\spec\\${REF_HASH_SEPARATOR}components\\schemas\\AllSystemsResponse`)
         ).toBeTruthy();
+    });
+
+    it('should check whether cache needs revalidation', () => {
+        expect(isRevalidationRequired({})).toBe(false);
+        expect(isRevalidationRequired({ 'cache-control': 'no-cache' })).toBe(true); // Reload page
+        expect(isRevalidationRequired({ 'cache-control': 'max-age=0' })).toBe(true); // Refresh
+        expect(isRevalidationRequired({ pragma: 'no-cache' })).toBe(true); // HTTP/1.0
     });
 });

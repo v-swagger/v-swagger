@@ -1,14 +1,31 @@
 import { OpenAPI } from 'openapi-types';
 import { FileNameHash } from '../types';
 
-export class VCache {
-    private static cache: Map<FileNameHash, OpenAPI.Document> = new Map();
+export type CacheEntry = {
+    fileName: string;
+    // indicate whether cache is fresh. If must revalidate is set to true. Need to re-parse the schema
+    mustRevalidate: boolean;
+    schema: OpenAPI.Document;
+};
 
-    public static get(hash: FileNameHash): OpenAPI.Document | undefined {
+export class VCache {
+    private static cache: Map<FileNameHash, CacheEntry> = new Map();
+
+    public static get(hash: FileNameHash): CacheEntry | undefined {
         return VCache.cache.get(hash);
     }
-    public static set(hash: FileNameHash, value: OpenAPI.Document) {
-        VCache.cache.set(hash, value);
+
+    public static set(hash: FileNameHash, entry: CacheEntry) {
+        VCache.cache.set(hash, entry);
+    }
+
+    public static setValidationState(hash: FileNameHash, state: boolean) {
+        const entry = VCache.get(hash);
+        if (!entry) {
+            throw new Error(`Cache does not exist at all: ${hash}`);
+        }
+        entry.mustRevalidate = state;
+        VCache.set(hash, entry); // this line is optional, just for readability
     }
 
     public static delete(hash: FileNameHash) {
