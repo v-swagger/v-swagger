@@ -1,6 +1,7 @@
 {
     "name": "v-swagger",
     "displayName": "v-swagger",
+    "publisher": "Pylon",
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
     "version": "1.0.0",
     "engines": {
@@ -8,9 +9,15 @@
         "node": "^18.13.0",
         "npm": "^8.19.3"
     },
+    "license": "SEE LICENSE IN LICENSE.md",
     "categories": [
+        "Visualization"
+    ],
+    "keywords": [
+        "Swagger Viewer",
+        "OpenAPI",
         "Swagger",
-        "OpenAPI"
+        "View Swagger"
     ],
     "activationEvents": [],
     "main": "./dist/index.js",
@@ -122,5 +129,6 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/brelian/v-swagger.git"
-    }
+    },
+    "icon": "static/images/logo.png"
 }

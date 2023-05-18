@@ -1,11 +1,13 @@
-import path from 'path';
+/* eslint-disable @typescript-eslint/naming-convention */
+import * as path from 'path';
 import { TextEditor } from 'vscode';
 import {
+    REF_HASH_SEPARATOR,
     getActivatedFileName,
     hashFileName,
+    isRevalidationRequired,
     isValid$Ref,
     normalizePath,
-    REF_HASH_SEPARATOR,
 } from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
@@ -37,6 +39,13 @@ describe('test fileUtils', () => {
         expect(
             isValid$Ref('$ref', `c:\\Users\\pylon\\spec\\${REF_HASH_SEPARATOR}components\\schemas\\AllSystemsResponse`)
         ).toBeTruthy();
+    });
+
+    it('should check whether cache needs revalidation', () => {
+        expect(isRevalidationRequired({})).toBe(false);
+        expect(isRevalidationRequired({ 'cache-control': 'no-cache' })).toBe(true); // Reload page
+        expect(isRevalidationRequired({ 'cache-control': 'max-age=0' })).toBe(true); // Refresh
+        expect(isRevalidationRequired({ pragma: 'no-cache' })).toBe(true); // HTTP/1.0
     });
 
     it('should normalize path', () => {
