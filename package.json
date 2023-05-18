@@ -9,9 +9,15 @@
         "node": "^18.13.0",
         "npm": "^8.19.3"
     },
+    "license": "SEE LICENSE IN LICENSE.md",
     "categories": [
+        "Visualization"
+    ],
+    "keywords": [
+        "Swagger Viewer",
+        "OpenAPI",
         "Swagger",
-        "OpenAPI"
+        "View Swagger"
     ],
     "activationEvents": [],
     "main": "./dist/index.js",
