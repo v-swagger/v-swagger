@@ -36,7 +36,7 @@ export class PathRewriter {
             }
             console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
             const dir = path.dirname(this.fileName);
-            const fullPath = path.join(dir, rewritten);
+            const fullPath = path.join(dir, rewritten).replace(/\\/g, '/');
             const { absolutePath, hashPath } = normalize$Ref(fullPath);
             const isInternal = absolutePath === this.fileName;
             console.info(
