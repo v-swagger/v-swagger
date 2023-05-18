@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
 import { RewriteConfig } from '../types';
-import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
+import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref, normalizePath } from '../utils/fileUtil';
 
 type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
@@ -36,7 +36,7 @@ export class PathRewriter {
             }
             console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
             const dir = path.dirname(this.fileName);
-            const fullPath = path.join(dir, rewritten).replace(/\\/g, '/');
+            const fullPath = normalizePath(path.join(dir, rewritten));
             const { absolutePath, hashPath } = normalize$Ref(fullPath);
             const isInternal = absolutePath === this.fileName;
             console.info(

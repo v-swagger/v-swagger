@@ -17,7 +17,18 @@ export function hashFileName(fileName: string): string {
  */
 export function getActivatedFileName(editor?: vscode.TextEditor) {
     assert(editor);
-    return editor.document.fileName;
+    return normalizePath(editor.document.fileName);
+}
+
+/**
+ * Normalize file path to follow posix style.  Specifically, replace \ to /.
+ * e.g.
+ *     c:\path\to/pet.yaml#components\schema/Pet -> c:/path/to/pet.yaml#components/schema/Pet
+ * @param fileName
+ * @returns
+ */
+export function normalizePath(fileName: string): string {
+    return fileName.replace(/\\/g, path.posix.sep);
 }
 
 /**

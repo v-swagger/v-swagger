@@ -1,5 +1,12 @@
+import path from 'path';
 import { TextEditor } from 'vscode';
-import { getActivatedFileName, hashFileName, isValid$Ref, REF_HASH_SEPARATOR } from '../../utils/fileUtil';
+import {
+    getActivatedFileName,
+    hashFileName,
+    isValid$Ref,
+    normalizePath,
+    REF_HASH_SEPARATOR,
+} from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
     it('should get an hash string', () => {
@@ -30,5 +37,10 @@ describe('test fileUtils', () => {
         expect(
             isValid$Ref('$ref', `c:\\Users\\pylon\\spec\\${REF_HASH_SEPARATOR}components\\schemas\\AllSystemsResponse`)
         ).toBeTruthy();
+    });
+
+    it('should normalize path', () => {
+        expect(normalizePath('/root/my-dir/a.yaml#xx')).toBe('/root/my-dir/a.yaml#xx');
+        expect(normalizePath(`c:${path.win32.sep}my-dir\\b.yaml`)).toBe('c:/my-dir/b.yaml');
     });
 });
