@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import * as path from 'path';
 import { TextEditor } from 'vscode';
 import {
+    REF_HASH_SEPARATOR,
     getActivatedFileName,
     hashFileName,
     isRevalidationRequired,
     isValid$Ref,
-    REF_HASH_SEPARATOR,
+    normalizePath,
 } from '../../utils/fileUtil';
 
 describe('test fileUtils', () => {
@@ -44,5 +46,10 @@ describe('test fileUtils', () => {
         expect(isRevalidationRequired({ 'cache-control': 'no-cache' })).toBe(true); // Reload page
         expect(isRevalidationRequired({ 'cache-control': 'max-age=0' })).toBe(true); // Refresh
         expect(isRevalidationRequired({ pragma: 'no-cache' })).toBe(true); // HTTP/1.0
+    });
+
+    it('should normalize path', () => {
+        expect(normalizePath('/root/my-dir/a.yaml#xx')).toBe('/root/my-dir/a.yaml#xx');
+        expect(normalizePath(`c:${path.win32.sep}my-dir\\b.yaml`)).toBe('c:/my-dir/b.yaml');
     });
 });
