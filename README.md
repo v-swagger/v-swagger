@@ -11,16 +11,16 @@ npm run package
 ```
 
 Install it,
-![install](docs/images/install-from-file.png)
+![install](https://0x400.com/images/v-swagger/install-from-file.png)
 
 **Preview Swagger Definition**
 
-![preview](docs/images/preview-button.png)
+![preview](https://0x400.com/images/v-swagger/preview-button.png)
 
 **Configurations**
 
 Open user settings, filter by "v-swagger" keyword,
-![setting](docs/images/extension-config.png)
+![setting](https://0x400.com/images/v-swagger/extension-config.png)
 
 ## Development
 
@@ -38,13 +38,13 @@ npm run compile
 ```
 
 Press F5 to start extension with debugging mode. Or click on the debugging button in the left menu list, you will be able to execute "Run Extension" script manually to start debugging the extension.
-![](docs/images/start-debugging.jpg)
+![](https://0x400.com/images/v-swagger/start-debugging.jpg)
 
 Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started/your-first-extension#debugging-the-extension)
 
 ## Architecture
 
-![](docs/images/v-swagger-architecture.png)
+![](https://0x400.com/images/v-swagger/v-swagger-architecture.png)
 
 ## How does it work
 
