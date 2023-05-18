@@ -48,7 +48,7 @@ export class VParser {
                 await this.resolve(ref);
             }
             const dereferenced = await this.dereference(parsedSchema);
-            VCache.set(hash, dereferenced);
+            VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
         } catch (e) {
             console.error(`[v-parser]: gets an error when resolving %s: %o`, fileName, e);
         }
@@ -101,7 +101,7 @@ export class VParser {
         if (!VCache.has(hash)) {
             return;
         }
-        const refSchema = VCache.get(hash);
+        const { schema: refSchema } = VCache.get(hash)!;
         const refPath = hashPath.replaceAll(path.posix.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
         delete schema.$ref;
@@ -118,11 +118,10 @@ export class VParser {
         );
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
-            VCache.delete(this.hash);
+            VCache.setValidationState(this.hash, true);
             console.info(`[v-parser]: file %s changed, notify clients`, uri);
-            await this.parse();
             // todo: decouple from VServer later
-            VServer.getInstance().pushJsonSpec(this.hash);
+            await VServer.getInstance().pushJsonSpec(this.hash);
         });
     }
 

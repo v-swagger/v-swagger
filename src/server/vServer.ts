@@ -6,7 +6,9 @@ import { getPortPromise } from 'portfinder';
 import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
+import { VParser } from '../parser/vParser';
 import { FileNameHash } from '../types';
+import { isRevalidationRequired } from '../utils/fileUtil';
 
 enum WebSocketEvents {
     connection = 'connection',
@@ -25,8 +27,8 @@ const DEFAULT_PORT = 18512;
 export class VServer {
     private host: string = DEFAULT_HOST;
     private port: number = DEFAULT_PORT;
-    private httpServer: http.Server;
-    private websocketServer: SocketServer;
+    private readonly httpServer: http.Server;
+    private readonly websocketServer: SocketServer;
 
     private serverRunning = false;
 
@@ -54,6 +56,7 @@ export class VServer {
         const app = express();
         app.use('/static', express.static(join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
+            VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
             const htmlContent = fs
                 .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
                 .toString('utf-8')
@@ -68,11 +71,11 @@ export class VServer {
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.connection, (socket: Socket) => {
             console.info(`[v-server]: on websocket connection event`);
-            socket.on(WebSocketEvents.load, (data: FileLoadPayload) => {
+            socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
                 socket.join(hash);
-                this.pushJsonSpec(hash);
+                await this.pushJsonSpec(hash);
             });
         });
     }
@@ -98,14 +101,21 @@ export class VServer {
         console.info(`[v-server]: server is stopping`);
     }
 
-    public pushJsonSpec(hash: FileNameHash) {
+    public async pushJsonSpec(hash: FileNameHash) {
         try {
-            const jsonSpec = VCache.get(hash);
-            // decycle
-            if (!jsonSpec) {
+            if (!VCache.has(hash)) {
+                // todo: UI display errors?
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
-            this.websocketServer.to(hash).emit(WebSocketEvents.push, jsonSpec);
+            const { fileName, mustRevalidate } = VCache.get(hash)!;
+            if (mustRevalidate) {
+                const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
+                const vParser = new VParser(rewriteConfig, fileName);
+                await vParser.parse();
+            }
+            // schema is fresh after revalidation
+            const { schema } = VCache.get(hash)!;
+            this.websocketServer.to(hash).emit(WebSocketEvents.push, schema);
         } catch (e) {
             console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
         }
