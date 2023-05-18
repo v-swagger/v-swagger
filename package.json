@@ -129,5 +129,6 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/brelian/v-swagger.git"
-    }
+    },
+    "icon": "static/images/logo.png"
 }
