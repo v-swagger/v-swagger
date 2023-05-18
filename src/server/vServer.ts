@@ -5,10 +5,9 @@ import { join } from 'path';
 import { getPortPromise } from 'portfinder';
 // error in win: Could not find a declaration file for module
 // workaround suggested by https://stackoverflow.com/a/55576119/9304616
-/* eslint-disable */
+/* eslint-disable-next-line */
 // @ts-ignore
 import { Socket, Server as SocketServer } from 'socket.io';
-/* eslint-enable */
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { FileNameHash } from '../types';
