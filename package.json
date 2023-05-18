@@ -3,7 +3,7 @@
     "displayName": "v-swagger",
     "publisher": "Pylon",
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
-    "version": "1.0.0",
+    "version": "0.0.5",
     "engines": {
         "vscode": "^1.70.0",
         "node": "^18.13.0",
