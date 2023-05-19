@@ -44,7 +44,7 @@ Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started
 
 ## Architecture We Build
 
-![](https://0x400.com/images/v-swagger/v-swagger-architecture.png)
+<img src="https://0x400.com/images/v-swagger/v-swagger-architecture.png" width="600">
 
 ## Things We Do
 
