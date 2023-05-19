@@ -20,18 +20,16 @@ Visualize Swagger (V-Swagger) is a VS Code extension that is able to parse and p
 
 ## Functions We Provide
 
-<img src="https://0x400.com/images/V-Swagger/preview-demo-v1.gif" width="800">
-
-![preview demo](https://0x400.com/images/v-swagger/preview-demo.gif)
+<img src="https://0x400.com/images/v-swagger/preview-demo-v2.gif" width="800">
 
 **Preview Swagger Definition**
 
-<img src="https://0x400.com/images/V-Swagger/preview-button.png" width="800">
+<img src="https://0x400.com/images/v-swagger/preview-button-v2.png" width="800">
 
 **Configurations**
 
 Open user settings, filter by "V-Swagger" keyword,
-<img src="https://0x400.com/images/V-Swagger/extension-config.png" width="800">
+<img src="https://0x400.com/images/v-swagger/extension-config-v2.png" width="800">
 
 ## Contributions We Welcome
 
@@ -50,13 +48,13 @@ npm run compile
 
 Press F5 to start extension with debugging mode. Or click on the debugging button in the left menu list, you will be able to execute "Run Extension" script manually to start debugging the extension.
 
-<img src="https://0x400.com/images/V-Swagger/start-debugging.jpg" width="300">
+<img src="https://0x400.com/images/v-swagger/start-debugging-v2.jpg" width="300">
 
 Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started/your-first-extension#debugging-the-extension)
 
 ## Architecture We Build
 
-<img src="https://0x400.com/images/V-Swagger/V-Swagger-architecture.png" width="800">
+<img src="https://0x400.com/images/v-swagger/V-Swagger-architecture-v2.png" width="800">
 
 ## Things We Do
 
