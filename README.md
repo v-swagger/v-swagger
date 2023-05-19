@@ -37,7 +37,8 @@ npm run compile
 ```
 
 Press F5 to start extension with debugging mode. Or click on the debugging button in the left menu list, you will be able to execute "Run Extension" script manually to start debugging the extension.
-![](https://0x400.com/images/v-swagger/start-debugging.jpg)
+
+<img src="https://0x400.com/images/v-swagger/start-debugging.jpg" width="300">
 
 Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started/your-first-extension#debugging-the-extension)
 
