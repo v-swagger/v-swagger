@@ -19,6 +19,14 @@ export class VCache {
         VCache.cache.set(hash, entry);
     }
 
+    public static isFresh(hash: FileNameHash): boolean {
+        const entry = VCache.get(hash);
+        if (!entry) {
+            throw new Error(`Cache does not exist at all: ${hash}`);
+        }
+        return !entry.mustRevalidate;
+    }
+
     public static setValidationState(hash: FileNameHash, state: boolean) {
         const entry = VCache.get(hash);
         if (!entry) {

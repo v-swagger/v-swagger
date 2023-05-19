@@ -111,8 +111,8 @@ export class VServer {
                 // todo: UI display errors?
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
-            const { fileName, mustRevalidate } = VCache.get(hash)!;
-            if (mustRevalidate) {
+            const { fileName } = VCache.get(hash)!;
+            if (!VCache.isFresh(hash)) {
                 const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
                 const vParser = new VParser(rewriteConfig, fileName);
                 await vParser.parse();
