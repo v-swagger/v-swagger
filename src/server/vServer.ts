@@ -50,14 +50,20 @@ export class VServer {
         const app = express();
         app.use('/static', express.static(join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
-            VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
-            const htmlContent = fs
-                .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
-                .toString('utf-8')
-                .replace('%FILE_NAME%', req.params.basename)
-                .replace('%FILE_HASH%', req.params.fileNameHash);
-            res.setHeader('Content-Type', 'text/html');
-            res.send(htmlContent);
+            try {
+                VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
+                const htmlContent = fs
+                    .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
+                    .toString('utf-8')
+                    .replace('%FILE_NAME%', req.params.basename)
+                    .replace('%FILE_HASH%', req.params.fileNameHash);
+                res.setHeader('Content-Type', 'text/html');
+                res.send(htmlContent);
+            } catch (e) {
+                vscode.window.showErrorMessage(
+                    `Cannot preview file ${req.params.basename} due to an error: \n ${(e as Error)?.message}`
+                );
+            }
         });
         return app;
     }
@@ -114,7 +120,6 @@ export class VServer {
             vscode.window.showErrorMessage(
                 `Cannot synchronize changes of ${baseFileName} due to an error: \n ${(e as Error)?.message}`
             );
-            throw e;
         }
     }
 }

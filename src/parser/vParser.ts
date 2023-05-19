@@ -16,7 +16,7 @@ export class VParser {
     private readonly watcher: vscode.FileSystemWatcher;
 
     private constructor(readonly fileName: string, readonly hash: FileNameHash) {
-        this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
+        this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite;
 
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
@@ -64,7 +64,6 @@ export class VParser {
             // mark as resolved in advance nevertheless there is an error
             this.seen.add(hash);
             let parsedSchema = await SwaggerParser.parse(fileName);
-
             const rewriter = new PathRewriter(this.rewriteConfig, fileName);
             parsedSchema = rewriter.rewrite(parsedSchema);
             for (const ref of rewriter.getAllRefs()) {
@@ -74,7 +73,6 @@ export class VParser {
             VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
         } catch (e) {
             console.error(`[v-parser]: gets an error when resolving %s: %o`, fileName, e);
-            throw e;
         }
     }
 
