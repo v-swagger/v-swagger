@@ -2,10 +2,11 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
+import { io, Socket } from 'socket.io-client';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
-import { $RefSchema, FileNameHash, RewriteConfig } from '../types';
+import { $RefSchema, FileNameHash, RewriteConfig, WebSocketEvents } from '../types';
 import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
@@ -13,6 +14,7 @@ export class VParser {
     private seen: Set<FileNameHash> = new Set();
     private readonly rewriteConfig: RewriteConfig;
     private readonly watcher: vscode.FileSystemWatcher;
+    private readonly socket: Socket;
 
     private constructor(readonly fileName: string, readonly hash: FileNameHash) {
         this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
@@ -24,6 +26,9 @@ export class VParser {
             path.basename(this.fileName)
         );
         this.watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
+
+        this.socket = io(VServer.getInstance().getServerUri().toString());
+
         this.registerFileChangeListener();
     }
 
@@ -133,25 +138,21 @@ export class VParser {
         console.info(`[v-parser]: create watcher for file - %s`, this.fileName);
         this.watcher.onDidChange(async (uri) => {
             const baseFileName = path.basename(this.fileName);
-            try {
-                await vscode.window.withProgress(
-                    {
-                        title: `Synchronize changes of ${baseFileName} to preview client`,
-                        location: vscode.ProgressLocation.Notification,
-                    },
-                    async () => {
-                        VCache.setValidationState(this.hash, true);
-                        console.info(`[v-parser]: file %s changed, notify clients`, uri);
-                        // todo: decouple from VServer later
-                        await VServer.getInstance().pushJsonSpec(this.hash);
-                    }
-                );
-            } catch (e) {
-                console.error(`get an error during synchronization: %s`, e);
-                vscode.window.showErrorMessage(
-                    `Cannot synchronize changes of ${baseFileName} due to an error: \n ${(e as Error)?.message}`
-                );
-            }
+            await vscode.window.withProgress(
+                {
+                    title: `Synchronize changes of ${baseFileName} to preview client`,
+                    location: vscode.ProgressLocation.Notification,
+                },
+                async () => {
+                    VCache.setValidationState(this.hash, true);
+                    console.info(`[v-parser]: file %s changed, notify clients`, uri);
+                    // ask client to load data
+                    this.socket.emit(WebSocketEvents.Load, {
+                        basename: baseFileName,
+                        fileNameHash: this.hash,
+                    });
+                }
+            );
         });
     }
 
