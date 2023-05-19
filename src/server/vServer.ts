@@ -3,22 +3,12 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { join } from 'path';
 import { getPortPromise } from 'portfinder';
-// error in win: Could not find a declaration file for module
-// workaround suggested by https://stackoverflow.com/a/55576119/9304616
-/* eslint-disable-next-line */
-// @ts-ignore
 import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VParser } from '../parser/vParser';
-import { FileNameHash } from '../types';
+import { FileNameHash, WebSocketEvents } from '../types';
 import { isRevalidationRequired } from '../utils/fileUtil';
-
-enum WebSocketEvents {
-    connection = 'connection',
-    load = 'load',
-    push = 'push',
-}
 
 type FileLoadPayload = {
     fileNameHash: FileNameHash;
@@ -73,13 +63,13 @@ export class VServer {
     }
 
     private initializeWebsocketServer() {
-        this.websocketServer.on(WebSocketEvents.connection, (socket: Socket) => {
+        this.websocketServer.on(WebSocketEvents.Connection, (socket: Socket) => {
             console.info(`[v-server]: on websocket connection event`);
-            socket.on(WebSocketEvents.load, async (data: FileLoadPayload) => {
+            socket.on(WebSocketEvents.Load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
                 console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
                 socket.join(hash);
-                await this.pushJsonSpec(hash);
+                await this.pushJsonSpec(hash, data.basename);
             });
         });
     }
@@ -105,7 +95,7 @@ export class VServer {
         console.info(`[v-server]: server is stopping`);
     }
 
-    public async pushJsonSpec(hash: FileNameHash) {
+    private async pushJsonSpec(hash: FileNameHash, baseFileName: string) {
         try {
             if (!VCache.has(hash)) {
                 // todo: UI display errors?
@@ -118,9 +108,13 @@ export class VServer {
             }
             // schema is fresh after revalidation
             const { schema } = VCache.get(hash)!;
-            this.websocketServer.to(hash).emit(WebSocketEvents.push, schema);
+            this.websocketServer.to(hash).emit(WebSocketEvents.Push, schema);
         } catch (e) {
-            console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
+            console.error(`[v-server]: get an error during synchronization: %s`, e);
+            vscode.window.showErrorMessage(
+                `Cannot synchronize changes of ${baseFileName} due to an error: \n ${(e as Error)?.message}`
+            );
+            throw e;
         }
     }
 }

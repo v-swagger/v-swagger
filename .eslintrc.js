@@ -8,7 +8,15 @@ module.exports = {
     },
     plugins: ['filenames'],
     rules: {
-        '@typescript-eslint/naming-convention': 'error',
+        '@typescript-eslint/naming-convention': [
+            'error',
+            { selector: 'variable', format: ['camelCase', 'UPPER_CASE'] },
+            { selector: 'class', format: ['PascalCase'] },
+            { selector: 'typeAlias', format: ['PascalCase'] },
+            { selector: 'interface', format: ['PascalCase'], prefix: ['I'] },
+            { selector: 'enum', format: ['PascalCase'] },
+            { selector: 'enumMember', format: ['PascalCase'] },
+        ],
         semi: 'off',
         '@typescript-eslint/semi': 'error',
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

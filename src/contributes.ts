@@ -16,14 +16,20 @@ export async function onPreview() {
             location: vscode.ProgressLocation.Notification,
         },
         async () => {
+            const vParser = VParser.getInstance(fileName);
             try {
-                const vParser = VParser.getInstance(fileName);
                 const uri = await vParser.parse();
 
                 const vClient = new VClient(uri);
                 await vClient.preview();
-            } catch (e) {
+            } catch (e: unknown) {
                 console.error(`get an error during preview: %s`, e);
+                vscode.window.showErrorMessage(`Cannot preview ${baseFileName} due to an error`, {
+                    detail: (e as Error)?.message,
+                    modal: true,
+                });
+                // if preview gets an error, destroy the vParser and clear all listeners
+                vParser.destroy(fileName);
             }
         }
     );
