@@ -6,18 +6,15 @@ import { io } from 'socket.io-client';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
-import { $RefSchema, FileNameHash, RewriteConfig, WebSocketEvents } from '../types';
+import { $RefSchema, FileNameHash, WebSocketEvents } from '../types';
 import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
     private seen: Set<FileNameHash> = new Set();
-    private readonly rewriteConfig: RewriteConfig;
     private readonly watcher: vscode.FileSystemWatcher;
 
     private constructor(readonly fileName: string, readonly hash: FileNameHash) {
-        this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite;
-
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
         const fileNameInRelativeWay = new vscode.RelativePattern(
@@ -42,10 +39,8 @@ export class VParser {
 
     public async parse(): Promise<vscode.Uri> {
         this.seen.clear();
-        if (!VCache.has(this.hash) || !VCache.mustRevalidate(this.hash)) {
-            await this.resolve(this.fileName);
-            // todo: watch change & notify subscribers
-        }
+        await this.resolve(this.fileName);
+        // todo: watch change & notify subscribers
         return this.getPreviewUrl();
     }
 
@@ -57,14 +52,16 @@ export class VParser {
     private async resolve(fileName: string) {
         const hash = hashFileName(fileName);
         // the freshness is maintained by File Watcher
-        if (this.seen.has(hash) || (VCache.has(hash) && VCache.mustRevalidate(hash))) {
+        if (this.seen.has(hash) || (VCache.has(hash) && !VCache.mustRevalidate(hash))) {
             return;
         }
         try {
             // mark as resolved in advance nevertheless there is an error
             this.seen.add(hash);
             let parsedSchema = await SwaggerParser.parse(fileName);
-            const rewriter = new PathRewriter(this.rewriteConfig, fileName);
+            // apply rewrite rule changes by not saving to singleton
+            const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite;
+            const rewriter = new PathRewriter(rewriteConfig, fileName);
             parsedSchema = rewriter.rewrite(parsedSchema);
             for (const ref of rewriter.getAllRefs()) {
                 await this.resolve(ref);
