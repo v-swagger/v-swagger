@@ -40,8 +40,8 @@ Read the dev documentation firstly: https://code.visualstudio.com/api/get-starte
 ### Setup local dev env
 
 ```shell
-git clone git@github.com:brelian/V-Swagger.git
-cd V-Swagger
+git clone git@github.com:v-swagger/v-swagger.git
+cd v-swagger
 npm install
 npm run compile
 ```

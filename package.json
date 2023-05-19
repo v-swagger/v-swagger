@@ -124,12 +124,12 @@
         "swagger-ui-dist": "^4.18.3"
     },
     "bugs": {
-        "url": "https://github.com/brelian/v-swagger/issues"
+        "url": "https://github.com/v-swagger/v-swagger/issues"
     },
-    "homepage": "https://github.com/brelian/v-swagger/blob/master/README.md",
+    "homepage": "https://github.com/v-swagger/v-swagger/blob/master/README.md",
     "repository": {
         "type": "git",
-        "url": "https://github.com/brelian/v-swagger.git"
+        "url": "https://github.com/v-swagger/v-swagger.git"
     },
     "icon": "static/images/logo.png"
 }
