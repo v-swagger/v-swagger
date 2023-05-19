@@ -2,7 +2,7 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
@@ -14,7 +14,6 @@ export class VParser {
     private seen: Set<FileNameHash> = new Set();
     private readonly rewriteConfig: RewriteConfig;
     private readonly watcher: vscode.FileSystemWatcher;
-    private readonly socket: Socket;
 
     private constructor(readonly fileName: string, readonly hash: FileNameHash) {
         this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
@@ -27,11 +26,10 @@ export class VParser {
         );
         this.watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
 
-        this.socket = io(VServer.getInstance().getServerUri().toString());
-
         this.registerFileChangeListener();
     }
 
+    private static socket = io(VServer.getInstance().getServerUri().toString());
     private static instances: Map<FileNameHash, VParser> = new Map();
 
     static getInstance(fileName: string): VParser {
@@ -147,7 +145,7 @@ export class VParser {
                     VCache.setValidationState(this.hash, true);
                     console.info(`[v-parser]: file %s changed, notify clients`, uri);
                     // ask client to load data
-                    this.socket.emit(WebSocketEvents.Load, {
+                    VParser.socket.emit(WebSocketEvents.Load, {
                         basename: baseFileName,
                         fileNameHash: this.hash,
                     });
