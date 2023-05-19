@@ -2,7 +2,7 @@
 
 View Swagger (v-swagger) is a VS Code extension that is able to parse and preview Swagger/OpenAPI definition locally either in VS Code Webview panel or Browsers.
 
-## Things We Value
+## Details We Value
 
 -   **Performance**: The parsed results of Swagger YAML files are cached to ensure optimal performance. Reparsing occurs only when changes are saved to disk, and all updates are displayed in the corresponding UI instantly.
 
