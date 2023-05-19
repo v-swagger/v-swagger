@@ -11,11 +11,21 @@ import { PathRewriter } from './pathRewriter';
 
 export class VParser {
     private seen: Set<FileNameHash> = new Set();
-    private readonly hash: FileNameHash;
+    private readonly rewriteConfig: RewriteConfig;
 
-    constructor(readonly rewriteConfig: RewriteConfig, readonly fileName: string) {
+    private constructor(readonly fileName: string, readonly hash: FileNameHash) {
+        this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
         this.registerFileChangeListener();
-        this.hash = hashFileName(fileName);
+    }
+
+    private static instances: Map<FileNameHash, VParser> = new Map();
+
+    static getInstance(fileName: string): VParser {
+        const hash = hashFileName(fileName);
+        if (!VParser.instances.has(hash)) {
+            VParser.instances.set(hash, new VParser(fileName, hash));
+        }
+        return VParser.instances.get(hash)!;
     }
 
     public async parse(): Promise<vscode.Uri> {

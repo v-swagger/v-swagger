@@ -17,8 +17,7 @@ export async function onPreview() {
         },
         async () => {
             try {
-                const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
-                const vParser = new VParser(rewriteConfig, fileName);
+                const vParser = VParser.getInstance(fileName);
                 const uri = await vParser.parse();
 
                 const vClient = new VClient(uri);

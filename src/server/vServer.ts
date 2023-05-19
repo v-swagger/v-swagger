@@ -113,8 +113,7 @@ export class VServer {
             }
             const { fileName } = VCache.get(hash)!;
             if (!VCache.mustRevalidate(hash)) {
-                const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
-                const vParser = new VParser(rewriteConfig, fileName);
+                const vParser = VParser.getInstance(fileName);
                 await vParser.parse();
             }
             // schema is fresh after revalidation
