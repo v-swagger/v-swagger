@@ -54,7 +54,7 @@ Refer to [debugging-the-extension](https://code.visualstudio.com/api/get-started
 
 ## Architecture We Build
 
-<img src="https://0x400.com/images/v-swagger/V-Swagger-architecture-v2.png" width="800">
+<img src="https://0x400.com/images/v-swagger/v-swagger-architecture-v2.png" width="800">
 
 ## Things We Do
 
