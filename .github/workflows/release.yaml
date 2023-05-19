@@ -47,6 +47,8 @@ jobs:
     release:
         needs: [build, prettier, lint]
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
@@ -57,15 +59,11 @@ jobs:
               uses: mikepenz/release-changelog-builder-action@v3
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@latest
+            - name: Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: |
+                      dist/**
+                  body_path: CHANGELOG.md
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: Release ${{ github.ref }}
-                  body: |
-                      ${{ steps.build_changelog.outputs.changelog }}
-                  draft: false
-                  prerelease: false
