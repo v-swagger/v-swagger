@@ -121,6 +121,7 @@ export class VServer {
             this.websocketServer.to(hash).emit(WebSocketEvents.push, schema);
         } catch (e) {
             console.error(`[v-server]: get an error when pushing json spec to ui: %j`, e);
+            throw e;
         }
     }
 }

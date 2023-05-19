@@ -12,9 +12,18 @@ import { PathRewriter } from './pathRewriter';
 export class VParser {
     private seen: Set<FileNameHash> = new Set();
     private readonly rewriteConfig: RewriteConfig;
+    private readonly watcher: vscode.FileSystemWatcher;
 
     private constructor(readonly fileName: string, readonly hash: FileNameHash) {
         this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
+
+        // for files not in opened workspace folders, must be specified in such a RelativePattern way
+        // for files in opened workspace folders, this also works
+        const fileNameInRelativeWay = new vscode.RelativePattern(
+            vscode.Uri.file(path.dirname(this.fileName)),
+            path.basename(this.fileName)
+        );
+        this.watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         this.registerFileChangeListener();
     }
 
@@ -29,16 +38,17 @@ export class VParser {
     }
 
     public async parse(): Promise<vscode.Uri> {
-        try {
-            this.seen.clear();
-            if (!VCache.has(this.hash) || !VCache.mustRevalidate(this.hash)) {
-                await this.resolve(this.fileName);
-                // todo: watch change & notify subscribers
-            }
-        } catch (e) {
-            console.error(`[v-parser]: gets an error when parsing yaml: %o`, e);
+        this.seen.clear();
+        if (!VCache.has(this.hash) || !VCache.mustRevalidate(this.hash)) {
+            await this.resolve(this.fileName);
+            // todo: watch change & notify subscribers
         }
         return this.getPreviewUrl();
+    }
+
+    public destroy(fileName: string) {
+        this.clearAllListeners();
+        VParser.instances.delete(hashFileName(fileName));
     }
 
     private async resolve(fileName: string) {
@@ -61,6 +71,7 @@ export class VParser {
             VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
         } catch (e) {
             console.error(`[v-parser]: gets an error when resolving %s: %o`, fileName, e);
+            throw e;
         }
     }
 
@@ -120,27 +131,32 @@ export class VParser {
 
     private registerFileChangeListener() {
         console.info(`[v-parser]: create watcher for file - %s`, this.fileName);
-        // for files not in opened workspace folders, must be specified in such a RelativePattern way
-        // for files in opened workspace folders, this also works
-        const fileNameInRelativeWay = new vscode.RelativePattern(
-            vscode.Uri.file(path.dirname(this.fileName)),
-            path.basename(this.fileName)
-        );
-        const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
-        watcher.onDidChange(async (uri) => {
-            await vscode.window.withProgress(
-                {
-                    title: `Synchronize changes of ${path.basename(this.fileName)} to preview client`,
-                    location: vscode.ProgressLocation.Notification,
-                },
-                async () => {
-                    VCache.setValidationState(this.hash, true);
-                    console.info(`[v-parser]: file %s changed, notify clients`, uri);
-                    // todo: decouple from VServer later
-                    await VServer.getInstance().pushJsonSpec(this.hash);
-                }
-            );
+        this.watcher.onDidChange(async (uri) => {
+            const baseFileName = path.basename(this.fileName);
+            try {
+                await vscode.window.withProgress(
+                    {
+                        title: `Synchronize changes of ${baseFileName} to preview client`,
+                        location: vscode.ProgressLocation.Notification,
+                    },
+                    async () => {
+                        VCache.setValidationState(this.hash, true);
+                        console.info(`[v-parser]: file %s changed, notify clients`, uri);
+                        // todo: decouple from VServer later
+                        await VServer.getInstance().pushJsonSpec(this.hash);
+                    }
+                );
+            } catch (e) {
+                console.error(`get an error during synchronization: %s`, e);
+                vscode.window.showErrorMessage(
+                    `Cannot synchronize changes of ${baseFileName} due to an error: \n ${(e as Error)?.message}`
+                );
+            }
         });
+    }
+
+    private clearAllListeners() {
+        this.watcher.dispose();
     }
 
     private getPreviewUrl(): vscode.Uri {
