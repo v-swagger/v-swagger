@@ -119,7 +119,7 @@
                     fileNameHash: fileNameHash,
                 });
 
-                // listen on `Push` event that server pushes json schema
+                // Listen on `push` event that server pushes json schema
                 socket.on('push', function (jsonSpec) {
                     buildSwaggerUI(jsonSpec);
                 });
