@@ -12,6 +12,8 @@ View Swagger (v-swagger) is a VS Code extension that is able to parse and previe
 
 ## Functions We Provide
 
+<img src="https://0x400.com/images/v-swagger/preview-demo.gif" width="600">
+
 **Preview Swagger Definition**
 
 <img src="https://0x400.com/images/v-swagger/preview-button.png" width="600">
