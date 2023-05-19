@@ -11,22 +11,32 @@ import { PathRewriter } from './pathRewriter';
 
 export class VParser {
     private seen: Set<FileNameHash> = new Set();
-    private readonly hash: FileNameHash;
+    private readonly rewriteConfig: RewriteConfig;
 
-    constructor(readonly rewriteConfig: RewriteConfig, readonly fileName: string) {
+    private constructor(readonly fileName: string, readonly hash: FileNameHash) {
+        this.rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
         this.registerFileChangeListener();
-        this.hash = hashFileName(fileName);
+    }
+
+    private static instances: Map<FileNameHash, VParser> = new Map();
+
+    static getInstance(fileName: string): VParser {
+        const hash = hashFileName(fileName);
+        if (!VParser.instances.has(hash)) {
+            VParser.instances.set(hash, new VParser(fileName, hash));
+        }
+        return VParser.instances.get(hash)!;
     }
 
     public async parse(): Promise<vscode.Uri> {
         try {
             this.seen.clear();
-            if (!VCache.has(this.hash)) {
+            if (!VCache.has(this.hash) || !VCache.mustRevalidate(this.hash)) {
                 await this.resolve(this.fileName);
                 // todo: watch change & notify subscribers
             }
         } catch (e) {
-            console.error(`[v-parser]: gets an error when parsing yaml: %j`, e);
+            console.error(`[v-parser]: gets an error when parsing yaml: %o`, e);
         }
         return this.getPreviewUrl();
     }
@@ -34,7 +44,7 @@ export class VParser {
     private async resolve(fileName: string) {
         const hash = hashFileName(fileName);
         // the freshness is maintained by File Watcher
-        if (this.seen.has(hash) || VCache.has(hash)) {
+        if (this.seen.has(hash) || (VCache.has(hash) && VCache.mustRevalidate(hash))) {
             return;
         }
         try {
@@ -118,10 +128,18 @@ export class VParser {
         );
         const watcher = vscode.workspace.createFileSystemWatcher(fileNameInRelativeWay);
         watcher.onDidChange(async (uri) => {
-            VCache.setValidationState(this.hash, true);
-            console.info(`[v-parser]: file %s changed, notify clients`, uri);
-            // todo: decouple from VServer later
-            await VServer.getInstance().pushJsonSpec(this.hash);
+            await vscode.window.withProgress(
+                {
+                    title: `Synchronize changes of ${path.basename(this.fileName)} to preview client`,
+                    location: vscode.ProgressLocation.Notification,
+                },
+                async () => {
+                    VCache.setValidationState(this.hash, true);
+                    console.info(`[v-parser]: file %s changed, notify clients`, uri);
+                    // todo: decouple from VServer later
+                    await VServer.getInstance().pushJsonSpec(this.hash);
+                }
+            );
         });
     }
 

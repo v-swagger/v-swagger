@@ -111,10 +111,9 @@ export class VServer {
                 // todo: UI display errors?
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
-            const { fileName, mustRevalidate } = VCache.get(hash)!;
-            if (mustRevalidate) {
-                const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
-                const vParser = new VParser(rewriteConfig, fileName);
+            const { fileName } = VCache.get(hash)!;
+            if (!VCache.mustRevalidate(hash)) {
+                const vParser = VParser.getInstance(fileName);
                 await vParser.parse();
             }
             // schema is fresh after revalidation
