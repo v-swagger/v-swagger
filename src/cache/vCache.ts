@@ -19,7 +19,7 @@ export class VCache {
         VCache.cache.set(hash, entry);
     }
 
-    public static isFresh(hash: FileNameHash): boolean {
+    public static mustRevalidate(hash: FileNameHash): boolean {
         const entry = VCache.get(hash);
         if (!entry) {
             throw new Error(`Cache does not exist at all: ${hash}`);

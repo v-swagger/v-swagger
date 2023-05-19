@@ -21,7 +21,7 @@ export class VParser {
     public async parse(): Promise<vscode.Uri> {
         try {
             this.seen.clear();
-            if (!VCache.has(this.hash) || !VCache.isFresh(this.hash)) {
+            if (!VCache.has(this.hash) || !VCache.mustRevalidate(this.hash)) {
                 await this.resolve(this.fileName);
                 // todo: watch change & notify subscribers
             }
@@ -34,7 +34,7 @@ export class VParser {
     private async resolve(fileName: string) {
         const hash = hashFileName(fileName);
         // the freshness is maintained by File Watcher
-        if (this.seen.has(hash) || (VCache.has(hash) && VCache.isFresh(hash))) {
+        if (this.seen.has(hash) || (VCache.has(hash) && VCache.mustRevalidate(hash))) {
             return;
         }
         try {

@@ -112,7 +112,7 @@ export class VServer {
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
             const { fileName } = VCache.get(hash)!;
-            if (!VCache.isFresh(hash)) {
+            if (!VCache.mustRevalidate(hash)) {
                 const rewriteConfig = vscode.workspace.getConfiguration('v-swagger').pathRewrite ?? {};
                 const vParser = new VParser(rewriteConfig, fileName);
                 await vParser.parse();
