@@ -108,7 +108,7 @@ export class VServer {
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
             const { fileName } = VCache.get(hash)!;
-            if (!VCache.mustRevalidate(hash)) {
+            if (VCache.mustRevalidate(hash)) {
                 const vParser = VParser.getInstance(fileName);
                 await vParser.parse();
             }

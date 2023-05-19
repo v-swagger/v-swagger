@@ -24,7 +24,7 @@ export class VCache {
         if (!entry) {
             throw new Error(`Cache does not exist at all: ${hash}`);
         }
-        return !entry.mustRevalidate;
+        return entry.mustRevalidate;
     }
 
     public static setValidationState(hash: FileNameHash, state: boolean) {
