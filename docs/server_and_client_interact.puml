@@ -5,8 +5,7 @@ entity VSCode as v
 entity VServer as s
 entity VParser as p
 entity VCache as a
-entity VClient as c
-entity Browser as b
+entity "VClient (Browser | Panel)" as b
 
 alt V-Swagger
 
@@ -29,10 +28,9 @@ alt V-Swagger
   end
 
   alt #Implementation STEP 3 Create Client
-    v -> c: create client with\nprovided uri
-    c -> b: open uri in \ninner browser or chrome\naccording to config
-    b --> c: ok
-    c --> v: ok 
+    v -> b: create client with\nprovided uri
+    b -> b: open uri in inner panel \nor chrome according to config
+    b --> v: ok
   end
 
   alt STEP 4 Browser Server Interactions
@@ -50,7 +48,7 @@ alt V-Swagger
     p -> p: parse swagger json object\nfrom given file path\nwith rewrite config applied
     p -> a: save parsed object \nby file name hash key
     a --> p : ok
-    p -> s: push change
+    p -> s: notify change (by websocket)
     s -> b: send push event \nwith new swagge object
     b -> b: render swagger ui with new data 
   end
