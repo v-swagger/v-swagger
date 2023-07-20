@@ -97,3 +97,15 @@ export function isRevalidationRequired(headers: express.Request['headers']): boo
     // Determine if cache revalidation is required
     return hasCacheControlNoCache || hasCacheControlMaxAgeZero || hasPragmaNoCache;
 }
+
+/**
+ *  Check if the current workspace is a remote workspace
+ * @returns
+ */
+export function isRemoteWorkspace(): boolean {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        const workspaceFolder = vscode.workspace.workspaceFolders[0];
+        return workspaceFolder.uri.scheme === 'remote';
+    }
+    return false;
+}

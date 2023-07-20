@@ -1,6 +1,7 @@
 import express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
+import * as ip from 'ip';
 import { join } from 'path';
 import { getPortPromise } from 'portfinder';
 import { Socket, Server as SocketServer } from 'socket.io';
@@ -8,7 +9,7 @@ import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VParser } from '../parser/vParser';
 import { FileNameHash, WebSocketEvents } from '../types';
-import { isRevalidationRequired } from '../utils/fileUtil';
+import { isRemoteWorkspace, isRevalidationRequired } from '../utils/fileUtil';
 
 type FileLoadPayload = {
     fileNameHash: FileNameHash;
@@ -29,6 +30,7 @@ export class VServer {
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
+        this.host = isRemoteWorkspace() ? ip.address() : DEFAULT_HOST;
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
