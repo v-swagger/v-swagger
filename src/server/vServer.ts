@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VParser } from '../parser/vParser';
 import { FileNameHash, WebSocketEvents } from '../types';
-import { isRevalidationRequired } from '../utils/fileUtil';
+import { getExternalAddress, isRemoteWorkspace, isRevalidationRequired } from '../utils/utils';
 
 type FileLoadPayload = {
     fileNameHash: FileNameHash;
@@ -29,6 +29,7 @@ export class VServer {
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
+        this.host = isRemoteWorkspace(vscode.workspace.workspaceFolders) ? getExternalAddress() : DEFAULT_HOST;
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);

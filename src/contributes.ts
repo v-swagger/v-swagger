@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { VClient } from './client/vClient';
 import { VParser } from './parser/vParser';
-import { getActivatedFileName } from './utils/fileUtil';
+import { getActivatedFileName } from './utils/utils';
 
 /**
  * The handler of 'Preview Swagger'

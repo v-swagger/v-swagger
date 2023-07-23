@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
 import { RewriteConfig } from '../types';
-import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref, normalizePath } from '../utils/fileUtil';
+import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref, normalizePath } from '../utils/utils';
 
 type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
