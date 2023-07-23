@@ -2,6 +2,8 @@
 
 Visualize Swagger (V-Swagger) is a VS Code extension that is able to parse and preview Swagger/OpenAPI definition locally either in VS Code Webview panel or Browsers.
 
+**Install from marketplace [Pylon.v-swagger](https://marketplace.visualstudio.com/items?itemName=Pylon.v-swagger)**
+
 ## Table of Content
 
 1. [Details We Value](#details-we-value)
