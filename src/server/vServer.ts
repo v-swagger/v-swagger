@@ -93,7 +93,7 @@ export class VServer {
         if (!this.serverRunning) {
             // select an available port
             this.port = await getPortPromise({ port: this.port });
-            this.httpServer.listen(this.port, this.host, () => {
+            this.httpServer.listen(this.port, '0.0.0.0', () => {
                 this.serverRunning = true;
                 console.info(`[v-server]: server is listening on: http://%s:%s`, this.host, this.port);
             });
