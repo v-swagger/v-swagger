@@ -2,6 +2,8 @@ import assert from 'assert';
 import * as crypto from 'crypto';
 import express from 'express';
 import * as _ from 'lodash';
+import * as os from 'os';
+import { NetworkInterfaceInfo } from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Normalized$Ref } from '../types';
@@ -102,10 +104,25 @@ export function isRevalidationRequired(headers: express.Request['headers']): boo
  *  Check if the current workspace is a remote workspace
  * @returns
  */
-export function isRemoteWorkspace(): boolean {
-    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        const workspaceFolder = vscode.workspace.workspaceFolders[0];
-        return workspaceFolder.uri.scheme === 'remote';
+export function isRemoteWorkspace(workspaceFolders: readonly vscode.WorkspaceFolder[] = []): boolean {
+    return workspaceFolders?.length > 0 && workspaceFolders[0].uri.scheme === 'remote';
+}
+
+/**
+ * get a public ipv4 address of remote workspace. If cannot get such a valid workspace, fallback to '0.0.0.0'.
+ */
+export function getExternalAddress(): string {
+    const intfsMap: NodeJS.Dict<NetworkInterfaceInfo[]> = os.networkInterfaces();
+    for (const key of Object.keys(intfsMap)) {
+        const intfs = intfsMap[key] ?? [];
+        for (const intf of intfs) {
+            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+            // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+            const familyV4Value = typeof intf.family === 'string' ? 'IPv4' : 4;
+            if (intf.family === familyV4Value && !intf.internal) {
+                return intf.address;
+            }
+        }
     }
-    return false;
+    return '0.0.0.0';
 }

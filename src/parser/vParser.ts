@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
 import { $RefSchema, FileNameHash, WebSocketEvents } from '../types';
-import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/fileUtil';
+import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/utils';
 import { PathRewriter } from './pathRewriter';
 
 export class VParser {
