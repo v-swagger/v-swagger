@@ -101,14 +101,6 @@ export function isRevalidationRequired(headers: express.Request['headers']): boo
 }
 
 /**
- *  Check if the current workspace is a remote workspace
- * @returns
- */
-export function isRemoteWorkspace(workspaceFolders: readonly vscode.WorkspaceFolder[] = []): boolean {
-    return workspaceFolders?.length > 0 && workspaceFolders[0].uri.scheme === 'remote';
-}
-
-/**
  * get a public ipv4 address of remote workspace. If cannot get such a valid workspace, fallback to '0.0.0.0'.
  */
 export function getExternalAddress(): string {

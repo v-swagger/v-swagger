@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VParser } from '../parser/vParser';
 import { FileNameHash, WebSocketEvents } from '../types';
-import { getExternalAddress, isRemoteWorkspace, isRevalidationRequired } from '../utils/utils';
+import { getExternalAddress, isRevalidationRequired } from '../utils/utils';
 
 type FileLoadPayload = {
     fileNameHash: FileNameHash;
@@ -29,7 +29,7 @@ export class VServer {
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
-        this.host = isRemoteWorkspace(vscode.workspace.workspaceFolders) ? getExternalAddress() : DEFAULT_HOST;
+        this.host = this.isRemoteWorkspace() ? getExternalAddress() : DEFAULT_HOST;
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
@@ -45,6 +45,14 @@ export class VServer {
         }
 
         return VServer.instance;
+    }
+
+    private isRemoteWorkspace(): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const manifest = require('../../package.json');
+        const vSwaggerId = `${manifest.publisher}.${manifest.name}`;
+        const currentExt = vscode.extensions.getExtension(vSwaggerId);
+        return currentExt?.extensionKind === vscode.ExtensionKind.Workspace;
     }
 
     private configureHttpServer() {

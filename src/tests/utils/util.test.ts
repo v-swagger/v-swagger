@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import os from 'os';
 import * as path from 'path';
-import * as vscode from 'vscode';
 import { TextEditor } from 'vscode';
 import {
     REF_HASH_SEPARATOR,
     getActivatedFileName,
     getExternalAddress,
     hashFileName,
-    isRemoteWorkspace,
     isRevalidationRequired,
     isValid$Ref,
     normalizePath,
@@ -55,30 +53,6 @@ describe('test fileUtils', () => {
     it('should normalize path', () => {
         expect(normalizePath('/root/my-dir/a.yaml#xx')).toBe('/root/my-dir/a.yaml#xx');
         expect(normalizePath(`c:${path.win32.sep}my-dir\\b.yaml`)).toBe('c:/my-dir/b.yaml');
-    });
-
-    describe('isRemoteWorkspace', () => {
-        it('should return true when workspaceFolders is not empty and the first folder has a remote scheme', () => {
-            const workspaceFolders = [
-                { uri: { scheme: 'remote' } },
-                { uri: { scheme: 'file' } },
-            ] as unknown as vscode.WorkspaceFolder[];
-            const result = isRemoteWorkspace(workspaceFolders);
-            expect(result).toBe(true);
-        });
-        it('should return false when workspaceFolders is empty', () => {
-            const workspaceFolders: vscode.WorkspaceFolder[] = [];
-            const result = isRemoteWorkspace(workspaceFolders);
-            expect(result).toBe(false);
-        });
-        it('should return false when the first folder does not have a remote scheme', () => {
-            const workspaceFolders = [
-                { uri: { scheme: 'file' } },
-                { uri: { scheme: 'file' } },
-            ] as unknown as vscode.WorkspaceFolder[];
-            const result = isRemoteWorkspace(workspaceFolders);
-            expect(result).toBe(false);
-        });
     });
 
     describe('getExternalAddress', () => {
