@@ -29,7 +29,7 @@ export class VServer {
     private constructor() {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
-        this.host = this.isRemoteWorkspace() ? getExternalAddress() : DEFAULT_HOST;
+        this.host = vscode.workspace.getConfiguration('v-swagger').defaultHost ?? this.getDefaultHost();
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
@@ -45,6 +45,10 @@ export class VServer {
         }
 
         return VServer.instance;
+    }
+
+    private getDefaultHost(): string {
+        return this.isRemoteWorkspace() ? getExternalAddress() : DEFAULT_HOST;
     }
 
     private isRemoteWorkspace(): boolean {
