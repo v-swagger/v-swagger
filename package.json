@@ -41,6 +41,11 @@
             "type": "object",
             "title": "V-Swagger Configuration",
             "properties": {
+                "v-swagger.defaultHost": {
+                    "type": "string",
+                    "default": "localhost",
+                    "description": "Default host in which the preview should be opened."
+                },
                 "v-swagger.defaultPort": {
                     "type": "integer",
                     "default": 18512,
