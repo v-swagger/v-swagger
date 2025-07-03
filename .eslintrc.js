@@ -18,13 +18,12 @@ module.exports = {
             { selector: 'enumMember', format: ['PascalCase'] },
         ],
         semi: 'error',
-        // '@typescript-eslint/semi': 'error', // Disabled as it causes issues with eslint 8
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         curly: 'warn',
         eqeqeq: 'error',
         'no-throw-literal': 'warn',
         'filenames/match-regex': [2, '^[a-z]+([A-Za-z0-9]+)*(.spec|.test|.unit)?', true],
         '@typescript-eslint/no-non-null-assertion': 'off',
-        '@typescript-eslint/no-require-imports': 'off', // Temporarily disabled for vServer.ts
+        '@typescript-eslint/no-require-imports': 'off',
     },
 };

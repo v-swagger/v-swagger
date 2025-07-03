@@ -7,4 +7,5 @@ module.exports = {
     useTabs: false,
     arrowParens: 'always',
     printWidth: 120,
+    endOfLine: 'lf',
 };
