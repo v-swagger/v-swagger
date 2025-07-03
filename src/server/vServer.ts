@@ -52,8 +52,11 @@ export class VServer {
     }
 
     private isRemoteWorkspace(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const manifest = require('../../package.json');
+        // Import package.json dynamically
+        const fs = require('fs');
+        const path = require('path');
+        const manifestPath = path.join(__dirname, '..', '..', 'package.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
         const vSwaggerId = `${manifest.publisher}.${manifest.name}`;
         const currentExt = vscode.extensions.getExtension(vSwaggerId);
         return currentExt?.extensionKind === vscode.ExtensionKind.Workspace;
