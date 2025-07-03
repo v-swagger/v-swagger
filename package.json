@@ -5,9 +5,9 @@
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
     "version": "1.0.3",
     "engines": {
-        "vscode": "^1.70.0",
-        "node": "^20.10.0",
-        "npm": "^10.7.0"
+        "vscode": ">=1.70.0",
+        "node": ">=18",
+        "npm": ">=8"
     },
     "license": "SEE LICENSE IN LICENSE.md",
     "categories": [
