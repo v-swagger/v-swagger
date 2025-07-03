@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import os from 'os';
 import * as path from 'path';
 import { TextEditor } from 'vscode';

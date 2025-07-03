@@ -11,39 +11,68 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, macos-latest, windows-latest]
-                node-version: [18.x, 20.x]
+                node-version: [20.x, 22.x]
         steps:
             - uses: actions/checkout@v3
-            - name: Cache node modules
-              uses: actions/cache@v3
-              env:
-                  cache-name: cache-node-modules
-              with:
-                  # npm cache files are stored in `~/.npm` on Linux/macOS
-                  path: ~/.npm
-                  key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-build-${{ env.cache-name }}-
-                      ${{ runner.os }}-build-
-                      ${{ runner.os }}-
             - name: Test
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm ci
-            - run: npm run test
+                  cache: 'yarn'
+            - name: Install Yarn
+              run: npm install -g yarn
+            - name: Get yarn cache directory path
+              id: yarn-cache-dir-path
+              run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+            - uses: actions/cache@v3
+              id: yarn-cache
+              with:
+                  path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+                  key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-yarn-
+            - run: yarn install --frozen-lockfile
+            - run: yarn test
     prettier:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
-            - run: npm ci && npm run format:check
+              with:
+                  cache: 'yarn'
+            - name: Install Yarn
+              run: npm install -g yarn
+            - name: Get yarn cache directory path
+              id: yarn-cache-dir-path
+              run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+            - uses: actions/cache@v3
+              id: yarn-cache
+              with:
+                  path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+                  key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-yarn-
+            - run: yarn install --frozen-lockfile && yarn format:check
     lint:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
-            - run: npm ci && npm run lint:check
+              with:
+                  cache: 'yarn'
+            - name: Install Yarn
+              run: npm install -g yarn
+            - name: Get yarn cache directory path
+              id: yarn-cache-dir-path
+              run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+            - uses: actions/cache@v3
+              id: yarn-cache
+              with:
+                  path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+                  key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-yarn-
+            - run: yarn install --frozen-lockfile && yarn lint:check
     release:
         needs: [build, prettier, lint]
         runs-on: ubuntu-latest
