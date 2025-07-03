@@ -30,20 +30,20 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm ci
+            - run: npm install
             - run: npm run test
     prettier:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
-            - run: npm ci && npm run format:check
+            - run: npm install && npm run format:check
     lint:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
-            - run: npm ci && npm run lint:check
+            - run: npm install && npm run lint:check
     release:
         needs: [build, prettier, lint]
         runs-on: ubuntu-latest
