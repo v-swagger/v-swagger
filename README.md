@@ -44,8 +44,8 @@ Read the dev documentation firstly: https://code.visualstudio.com/api/get-starte
 ```shell
 git clone git@github.com:v-swagger/v-swagger.git
 cd v-swagger
-npm install
-npm run compile
+yarn install
+yarn compile
 ```
 
 Press F5 to start extension with debugging mode. Or click on the debugging button in the left menu list, you will be able to execute "Run Extension" script manually to start debugging the extension.
