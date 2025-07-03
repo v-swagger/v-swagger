@@ -8,7 +8,10 @@ type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
     private rewriteRules: RewriteRule[];
     private refSet: Set<string> = new Set();
-    constructor(rewriteConfig: RewriteConfig, readonly fileName: string) {
+    constructor(
+        rewriteConfig: RewriteConfig,
+        readonly fileName: string
+    ) {
         this.rewriteRules = this.parseRewriteRules(rewriteConfig);
     }
 

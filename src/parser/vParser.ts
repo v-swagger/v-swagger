@@ -14,7 +14,10 @@ export class VParser {
     private seen: Set<FileNameHash> = new Set();
     private readonly watcher: vscode.FileSystemWatcher;
 
-    private constructor(readonly fileName: string, readonly hash: FileNameHash) {
+    private constructor(
+        readonly fileName: string,
+        readonly hash: FileNameHash
+    ) {
         // for files not in opened workspace folders, must be specified in such a RelativePattern way
         // for files in opened workspace folders, this also works
         const fileNameInRelativeWay = new vscode.RelativePattern(

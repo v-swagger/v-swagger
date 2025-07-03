@@ -14,11 +14,11 @@ Visualize Swagger (V-Swagger) is a VS Code extension that is able to parse and p
 
 ## Details We Value
 
--   **Performance**: The parsed results of Swagger YAML files are cached to ensure optimal performance. Reparsing occurs only when changes are saved to disk, and all updates are displayed in the corresponding UI instantly.
+- **Performance**: The parsed results of Swagger YAML files are cached to ensure optimal performance. Reparsing occurs only when changes are saved to disk, and all updates are displayed in the corresponding UI instantly.
 
--   **Improved File Reference**: The use of Swagger $ref is crucial for managing complex API definitions. With support for path rewriting (configurable in custom settings), V-Swagger offers greater flexibility in handling API definitions based on file references.
+- **Improved File Reference**: The use of Swagger $ref is crucial for managing complex API definitions. With support for path rewriting (configurable in custom settings), V-Swagger offers greater flexibility in handling API definitions based on file references.
 
--   **Error Handling**: V-Swagger prioritizes user experience by avoiding blank pages in case of fatal errors. Instead, users are provided with appropriate alerts. The project roadmap includes plans to introduce syntax check highlighting in the near future.
+- **Error Handling**: V-Swagger prioritizes user experience by avoiding blank pages in case of fatal errors. Instead, users are provided with appropriate alerts. The project roadmap includes plans to introduce syntax check highlighting in the near future.
 
 ## Functions We Provide
 
