@@ -6,7 +6,7 @@
     "version": "1.0.3",
     "engines": {
         "vscode": ">=1.70.0",
-        "node": ">=18",
+        "node": ">=20",
         "npm": ">=8"
     },
     "license": "SEE LICENSE IN LICENSE.md",
