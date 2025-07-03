@@ -24,6 +24,5 @@ module.exports = {
         'no-throw-literal': 'warn',
         'filenames/match-regex': [2, '^[a-z]+([A-Za-z0-9]+)*(.spec|.test|.unit)?', true],
         '@typescript-eslint/no-non-null-assertion': 'off',
-        '@typescript-eslint/no-require-imports': 'off',
     },
 };
