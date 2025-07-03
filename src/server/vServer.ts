@@ -1,7 +1,7 @@
 import express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
-import { join } from 'path';
+import * as path from 'path';
 import { getPortPromise } from 'portfinder';
 import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
@@ -52,8 +52,8 @@ export class VServer {
     }
 
     private isRemoteWorkspace(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const manifest = require('../../package.json');
+        const manifestPath = path.join(__dirname, '..', '..', 'package.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
         const vSwaggerId = `${manifest.publisher}.${manifest.name}`;
         const currentExt = vscode.extensions.getExtension(vSwaggerId);
         return currentExt?.extensionKind === vscode.ExtensionKind.Workspace;
@@ -61,12 +61,12 @@ export class VServer {
 
     private configureHttpServer() {
         const app = express();
-        app.use('/static', express.static(join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
+        app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             try {
                 VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
                 const htmlContent = fs
-                    .readFileSync(join(__dirname, '..', '..', 'static', 'index.html'))
+                    .readFileSync(path.join(__dirname, '..', '..', 'static', 'index.html'))
                     .toString('utf-8')
                     .replace('%FILE_NAME%', req.params.basename)
                     .replace('%FILE_HASH%', req.params.fileNameHash);

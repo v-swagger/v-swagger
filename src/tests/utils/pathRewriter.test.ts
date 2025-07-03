@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { OpenAPI } from 'openapi-types';
 import path from 'path';
 import { PathRewriter } from '../../parser/pathRewriter';
 
 describe('test pathRewriter', () => {
     it('should apply rewrite rules correctly', async () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         const pathRewriter = new PathRewriter(
             {
                 '@pylon/0x400-catalog-shared': 'catalog-shared',
