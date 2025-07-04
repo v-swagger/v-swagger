@@ -1,4 +1,3 @@
-import * as path from 'path';
 import {
     ErrorContext,
     IFileErrorContext,
@@ -6,6 +5,7 @@ import {
     IReferenceErrorContext,
     ISchemaErrorContext,
 } from '../types';
+import { normalizePath } from './utils';
 
 /**
  * Error categories to help users identify the source of the problem
@@ -242,15 +242,15 @@ export class ErrorHandler {
         const match = message.match(filePathRegex);
 
         if (match && match[1]) {
-            return match[1];
+            return normalizePath(match[1]);
         }
 
         // Try another common pattern
         const quotedPathRegex = /"([^"]+)"/;
         const quotedMatch = message.match(quotedPathRegex);
 
-        if (quotedMatch && quotedMatch[1] && quotedMatch[1].includes(path.sep)) {
-            return quotedMatch[1];
+        if (quotedMatch && quotedMatch[1]) {
+            return normalizePath(quotedMatch[1]);
         }
 
         return undefined;
