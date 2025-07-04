@@ -96,7 +96,7 @@ export class VParser {
             };
             const vError = error instanceof VError ? error : ErrorHandler.processError(error, errorContext);
 
-            logger.error(`[VParser] Error when resolving %s`, fileName);
+            logger.error('[VParser] Error when resolving %s', fileName);
 
             // Throw the enhanced error directly
             throw vError;
@@ -111,7 +111,7 @@ export class VParser {
         } catch (error) {
             // Log the error with full context but always rethrow it
             logger.error(
-                `[VParser] Error in dereference process for %s with error: `,
+                '[VParser] Error in dereference process for %s with error: %s',
                 this.fileName,
                 (error as Error).message
             );

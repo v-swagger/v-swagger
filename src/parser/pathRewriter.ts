@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
+import { logger } from '../logger/vLogger';
 import { IPathRewriteErrorContext, RewriteConfig } from '../types';
 import { ErrorHandler } from '../utils/errorHandler';
 import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref, normalizePath } from '../utils/utils';
@@ -30,6 +31,7 @@ export class PathRewriter {
      * Tracks which rules were applied to a reference for better error reporting
      */
     private rewriteReference(ref: string): { rewritten: string; appliedRules: RewriteRule[] } {
+        logger.debug('[PathRewriter] Rewriting reference: %s', ref);
         let rewritten = ref;
         const appliedRules: RewriteRule[] = [];
 
@@ -39,8 +41,20 @@ export class PathRewriter {
 
             // If the path was changed by this rule, add it to appliedRules
             if (beforeRewrite !== rewritten) {
+                logger.debug(
+                    '[PathRewriter] Rule applied: %s -> %s (result: %s)',
+                    rule.regex.toString(),
+                    rule.value,
+                    rewritten
+                );
                 appliedRules.push(rule);
             }
+        }
+
+        if (appliedRules.length > 0) {
+            logger.info('[PathRewriter] Reference rewritten from %s to %s', ref, rewritten);
+        } else {
+            logger.debug('[PathRewriter] No rules applied to reference: %s', ref);
         }
 
         return { rewritten, appliedRules };
@@ -55,15 +69,15 @@ export class PathRewriter {
 
             const { rewritten, appliedRules } = this.rewriteReference(ref);
 
-            console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
+            logger.info('[PathRewriter] Resolving path -> %s', rewritten);
             const dir = path.dirname(this.fileName);
             const fullPath = normalizePath(path.join(dir, rewritten));
 
             try {
                 const { absolutePath, hashPath } = normalize$Ref(fullPath);
                 const isInternal = absolutePath === this.fileName;
-                console.info(
-                    `[v-rewriter]: fullPath: %s, \n absolutePath: %s, \n hashPath: %s, \n fileName: %s`,
+                logger.debug(
+                    '[PathRewriter] Path resolution details: fullPath: %s, absolutePath: %s, hashPath: %s, fileName: %s',
                     fullPath,
                     absolutePath,
                     hashPath,
@@ -73,6 +87,7 @@ export class PathRewriter {
                 if (!isInternal) {
                     // collect all references
                     this.refSet.add(absolutePath);
+                    logger.debug('[PathRewriter] External reference added: %s', absolutePath);
                 }
 
                 return isInternal ? `${REF_HASH_SEPARATOR}${hashPath}` : fullPath;
@@ -92,7 +107,7 @@ export class PathRewriter {
                 // Process the error to enhance it with context
                 const vError = ErrorHandler.processError(err, errorContext);
 
-                console.error(`[v-rewriter]: Error resolving path:\n${vError.format()}`);
+                logger.error('[PathRewriter] Error resolving path: %s', err.message);
 
                 // Throw the enhanced error directly
                 throw vError;
@@ -112,7 +127,7 @@ export class PathRewriter {
                 regex: new RegExp(key),
                 value: value,
             });
-            console.info('[path-rewriter]: rewrite rule created: "%s" -> "%s"', key, value);
+            logger.info('[PathRewriter] Rewrite rule created: "%s" -> "%s"', key, value);
         }
 
         return rules;
