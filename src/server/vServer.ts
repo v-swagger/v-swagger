@@ -7,7 +7,8 @@ import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VParser } from '../parser/vParser';
-import { FileNameHash, WebSocketEvents } from '../types';
+import { FileNameHash, IOperationErrorContext, WebSocketEvents } from '../types';
+import { ErrorHandler, VError } from '../utils/errorHandler';
 import { getExternalAddress, isRevalidationRequired } from '../utils/utils';
 
 type FileLoadPayload = {
@@ -73,9 +74,20 @@ export class VServer {
                 res.setHeader('Content-Type', 'text/html');
                 res.send(htmlContent);
             } catch (e) {
-                vscode.window.showErrorMessage(
-                    `Cannot preview file ${req.params.basename} due to an error: \n ${(e as Error)?.message}`
-                );
+                const error = e as Error;
+                const errorContext: IOperationErrorContext = {
+                    fileNameHash: req.params.fileNameHash,
+                    basename: req.params.basename,
+                    operation: 'file preview',
+                };
+
+                // If the error is already a VError, use it directly
+                const vError = error instanceof VError ? error : ErrorHandler.processError(error, errorContext);
+
+                vscode.window.showErrorMessage(`Cannot preview file ${req.params.basename}`, {
+                    detail: vError.format(),
+                    modal: true,
+                });
             }
         });
         return app;
@@ -129,10 +141,23 @@ export class VServer {
             const { schema } = VCache.get(hash)!;
             this.websocketServer.to(hash).emit(WebSocketEvents.Push, schema);
         } catch (e) {
-            console.error(`[v-server]: get an error during synchronization: %s`, e);
-            vscode.window.showErrorMessage(
-                `Cannot synchronize changes of ${baseFileName} due to an error: \n ${(e as Error)?.message}`
-            );
+            const error = e as Error;
+            const contextInfo: IOperationErrorContext = {
+                fileNameHash: hash,
+                fileName: VCache.has(hash) ? VCache.get(hash)?.fileName : undefined,
+                basename: baseFileName,
+                operation: 'schema synchronization',
+            };
+
+            // If the error is already a VError, use it directly
+            const vError = error instanceof VError ? error : ErrorHandler.processError(error, contextInfo);
+
+            console.error(`[v-server]: Error during synchronization:\n${vError.format()}`);
+
+            vscode.window.showErrorMessage(`Cannot synchronize changes of ${baseFileName}`, {
+                detail: vError.format(),
+                modal: true,
+            });
         }
     }
 }

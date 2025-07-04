@@ -2,6 +2,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { VClient } from './client/vClient';
 import { VParser } from './parser/vParser';
+import { IOperationErrorContext } from './types';
+import { ErrorHandler, VError } from './utils/errorHandler';
 import { getActivatedFileName } from './utils/utils';
 
 /**
@@ -23,11 +25,24 @@ export async function onPreview() {
                 const vClient = new VClient(uri);
                 await vClient.preview();
             } catch (e: unknown) {
-                console.error(`get an error during preview: %s`, e);
-                vscode.window.showErrorMessage(`Cannot preview ${baseFileName} due to an error`, {
-                    detail: (e as Error)?.message,
+                const error = e as Error;
+
+                // If the error is already a VError, use it directly
+                const errorContext: IOperationErrorContext = {
+                    fileName,
+                    basename: baseFileName,
+                    operation: 'preview',
+                };
+                const vError = error instanceof VError ? error : ErrorHandler.processError(error, errorContext);
+
+                console.error(`Error during preview of ${baseFileName}:\n${vError.format()}`);
+
+                // Show a more helpful error notification
+                vscode.window.showErrorMessage(`Cannot preview ${baseFileName}`, {
+                    detail: vError.format(),
                     modal: true,
                 });
+
                 // if preview gets an error, destroy the vParser and clear all listeners
                 vParser.destroy(fileName);
             }

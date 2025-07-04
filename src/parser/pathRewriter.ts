@@ -1,10 +1,11 @@
 import * as _ from 'lodash';
 import { OpenAPI } from 'openapi-types';
 import * as path from 'path';
-import { RewriteConfig } from '../types';
+import { IPathRewriteErrorContext, RewriteConfig } from '../types';
+import { ErrorHandler } from '../utils/errorHandler';
 import { REF_HASH_SEPARATOR, isInternal$Ref, isValid$Ref, normalize$Ref, normalizePath } from '../utils/utils';
 
-type RewriteRule = { regex: RegExp; value: string };
+export type RewriteRule = { regex: RegExp; value: string };
 export class PathRewriter {
     private rewriteRules: RewriteRule[];
     private refSet: Set<string> = new Set();
@@ -25,36 +26,77 @@ export class PathRewriter {
      * @param schema
      * @returns
      */
+    /**
+     * Tracks which rules were applied to a reference for better error reporting
+     */
+    private rewriteReference(ref: string): { rewritten: string; appliedRules: RewriteRule[] } {
+        let rewritten = ref;
+        const appliedRules: RewriteRule[] = [];
+
+        for (const rule of this.rewriteRules) {
+            const beforeRewrite = rewritten;
+            rewritten = rewritten.replace(rule.regex, rule.value);
+
+            // If the path was changed by this rule, add it to appliedRules
+            if (beforeRewrite !== rewritten) {
+                appliedRules.push(rule);
+            }
+        }
+
+        return { rewritten, appliedRules };
+    }
+
     public rewrite(schema: OpenAPI.Document): OpenAPI.Document {
         return _.mergeWith({}, schema, (never: never, ref: string, key: string) => {
-            let rewritten: string = ref;
-
             if (!isValid$Ref(key, ref) || isInternal$Ref(key, ref)) {
                 // undefined uses default merge handling - used for all others properties
                 return undefined;
             }
 
-            for (const rule of this.rewriteRules) {
-                rewritten = rewritten.replace(rule.regex, rule.value);
-            }
+            const { rewritten, appliedRules } = this.rewriteReference(ref);
+
             console.info(`[v-rewriter]: resolving path -> %s`, rewritten);
             const dir = path.dirname(this.fileName);
             const fullPath = normalizePath(path.join(dir, rewritten));
-            const { absolutePath, hashPath } = normalize$Ref(fullPath);
-            const isInternal = absolutePath === this.fileName;
-            console.info(
-                `[v-rewriter]: fullPath: %s, \n absolutePath: %s, \n hashPath: %s, \n fileName: %s`,
-                fullPath,
-                absolutePath,
-                hashPath,
-                this.fileName
-            );
-            if (!isInternal) {
-                // collect all references
-                this.refSet.add(absolutePath);
-            }
 
-            return isInternal ? `${REF_HASH_SEPARATOR}${hashPath}` : fullPath;
+            try {
+                const { absolutePath, hashPath } = normalize$Ref(fullPath);
+                const isInternal = absolutePath === this.fileName;
+                console.info(
+                    `[v-rewriter]: fullPath: %s, \n absolutePath: %s, \n hashPath: %s, \n fileName: %s`,
+                    fullPath,
+                    absolutePath,
+                    hashPath,
+                    this.fileName
+                );
+
+                if (!isInternal) {
+                    // collect all references
+                    this.refSet.add(absolutePath);
+                }
+
+                return isInternal ? `${REF_HASH_SEPARATOR}${hashPath}` : fullPath;
+            } catch (error) {
+                // Process the error with ErrorHandler but still throw it
+                const err = error as Error;
+                const errorContext: IPathRewriteErrorContext = {
+                    fileName: this.fileName,
+                    originalPath: ref,
+                    rewrittenPath: rewritten,
+                    appliedRules: appliedRules,
+                    fullPath: fullPath,
+                    referenceValue: ref, // Include the original reference value
+                };
+
+                // Use ErrorHandler to process the error
+                // Process the error to enhance it with context
+                const vError = ErrorHandler.processError(err, errorContext);
+
+                console.error(`[v-rewriter]: Error resolving path:\n${vError.format()}`);
+
+                // Throw the enhanced error directly
+                throw vError;
+            }
         });
     }
 

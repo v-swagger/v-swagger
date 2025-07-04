@@ -6,7 +6,15 @@ import { io } from 'socket.io-client';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
 import { VServer } from '../server/vServer';
-import { $RefSchema, FileNameHash, WebSocketEvents } from '../types';
+import {
+    $RefSchema,
+    FileNameHash,
+    IFileErrorContext,
+    IReferenceErrorContext,
+    ISchemaErrorContext,
+    WebSocketEvents,
+} from '../types';
+import { ErrorHandler, VError } from '../utils/errorHandler';
 import { hashFileName, isInternal$Ref, isValid$Ref, normalize$Ref } from '../utils/utils';
 import { PathRewriter } from './pathRewriter';
 
@@ -72,14 +80,33 @@ export class VParser {
             const dereferenced = await this.dereference(parsedSchema);
             VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
         } catch (e) {
-            console.error(`[v-parser]: gets an error when resolving %s: %o`, fileName, e);
+            const error = e as Error;
+
+            // If the error is already a VError, use it directly
+            const errorContext: IFileErrorContext = {
+                fileName: fileName,
+                fileHash: hash,
+                referenceValue: fileName, // Include the full path for better error context
+            };
+            const vError = error instanceof VError ? error : ErrorHandler.processError(error, errorContext);
+
+            console.error(`[v-parser]: Error when resolving ${fileName}:\n${vError.format()}`);
+
+            // Throw the enhanced error directly
+            throw vError;
         }
     }
 
     private async dereference(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
-        const dereferenced = await this.dereferenceInternal(schema);
-        this.dereferenceExternal(dereferenced, new WeakSet());
-        return dereferenced;
+        try {
+            const dereferenced = await this.dereferenceInternal(schema);
+            this.dereferenceExternal(dereferenced, new WeakSet());
+            return dereferenced;
+        } catch (error) {
+            // Log the error with full context but always rethrow it
+            console.error(`[v-parser]: Error in dereference process for ${this.fileName}:`, error);
+            throw error;
+        }
     }
 
     private async dereferenceInternal(schema: OpenAPI.Document): Promise<OpenAPI.Document> {
@@ -93,39 +120,78 @@ export class VParser {
                 },
             });
         } catch (e) {
-            console.error(`[v-parser]: dereference internal reference failed due to %s`, e);
-            throw e;
+            // Use the ErrorHandler to generate an enhanced error message for schema validation issues
+            const error = e as Error;
+            const errorContext: ISchemaErrorContext = {
+                fileName: this.fileName,
+                schemaType: 'OpenAPI',
+            };
+
+            // Process the error to enhance it with context
+            const vError = ErrorHandler.processError(error, errorContext);
+
+            console.error(`[v-parser]: Error when dereferencing schema:\n${vError.format()}`);
+
+            // Throw the enhanced error directly
+            throw vError;
         }
     }
 
     private dereferenceExternal(schema: object, resolved: WeakSet<object>) {
-        try {
-            if (!_.isObject(schema) || resolved.has(schema)) {
-                return schema;
-            }
-            resolved.add(schema);
-
-            for (const [key, value] of Object.entries(schema)) {
-                if (isValid$Ref(key, value) && !isInternal$Ref(key, value)) {
-                    this.resolveExternal$Ref(schema, value);
-                } else {
-                    this.dereferenceExternal(value, resolved);
-                }
-            }
-        } catch (e) {
-            console.error(`[v-parser]: dereference external reference failed due to %s`, e);
+        if (!_.isObject(schema) || resolved.has(schema)) {
+            return schema;
         }
+        resolved.add(schema);
+
+        for (const [key, value] of Object.entries(schema)) {
+            if (isValid$Ref(key, value) && !isInternal$Ref(key, value)) {
+                try {
+                    this.resolveExternal$Ref(schema, value);
+                } catch (e) {
+                    // Process the error but re-throw it to propagate to caller
+                    const error = e as Error;
+                    const errorContext: IReferenceErrorContext = {
+                        fileName: this.fileName,
+                        referenceType: 'external',
+                        referenceValue: value,
+                        sourceFile: this.fileName,
+                    };
+
+                    // Process the error to enhance it with context
+                    const vError = ErrorHandler.processError(error, errorContext);
+
+                    console.error(
+                        `[v-parser]: Error when dereferencing external reference "${value}":\n${vError.format()}`
+                    );
+
+                    // Throw the enhanced error directly
+                    throw vError;
+                }
+            } else {
+                this.dereferenceExternal(value, resolved);
+            }
+        }
+        return schema;
     }
 
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
         const { absolutePath, hashPath } = normalize$Ref(value);
         const hash = hashFileName(absolutePath);
+
+        // Check if the reference exists in cache
         if (!VCache.has(hash)) {
-            return;
+            throw new Error(`External reference not found: ${absolutePath}`);
         }
+
         const { schema: refSchema } = VCache.get(hash)!;
         const refPath = hashPath.replaceAll(path.posix.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
+
+        // Check if the path within the schema exists
+        if (resolvedRef === undefined) {
+            throw new Error(`Path not found in referenced schema: ${hashPath} in ${absolutePath}`);
+        }
+
         delete schema.$ref;
         _.assign(schema, resolvedRef);
     }

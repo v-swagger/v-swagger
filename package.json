@@ -119,7 +119,6 @@
         "ts-jest": "^29.1.0",
         "@vscode/vsce": "^3.6.0"
     },
-    "type": "module",
     "dependencies": {
         "@apidevtools/swagger-parser": "^12.0.0",
         "express": "^5.1.0",
