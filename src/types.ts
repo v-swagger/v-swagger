@@ -51,7 +51,6 @@ export interface IBaseErrorContext {
  * File error context for file not found or access errors
  */
 export interface IFileErrorContext extends IBaseErrorContext {
-    fileHash?: string; // The hash of the file
     baseFileName?: string; // The base name of the file
     referenceValue?: string; // The reference that points to this file
 }

@@ -6,6 +6,7 @@ import { getPortPromise } from 'portfinder';
 import { Socket, Server as SocketServer } from 'socket.io';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
+import { logger } from '../logger/vLogger';
 import { VParser } from '../parser/vParser';
 import { FileNameHash, IOperationErrorContext, WebSocketEvents } from '../types';
 import { ErrorHandler, VError } from '../utils/errorHandler';
@@ -31,11 +32,14 @@ export class VServer {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
         this.host = vscode.workspace.getConfiguration('v-swagger').defaultHost ?? this.getDefaultHost();
+        logger.debug('[VServer] Initializing with host: %s, port: %d', this.host, this.port);
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
+        logger.debug('[VServer] HTTP server created');
 
         this.websocketServer = new SocketServer(this.httpServer);
+        logger.debug('[VServer] WebSocket server created');
         this.initializeWebsocketServer();
     }
 
@@ -61,8 +65,10 @@ export class VServer {
     }
 
     private configureHttpServer() {
+        logger.debug('[VServer] Configuring HTTP server');
         const app = express();
         app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
+        logger.debug('[VServer] Static route configured for node_modules');
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             try {
                 VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
@@ -95,10 +101,10 @@ export class VServer {
 
     private initializeWebsocketServer() {
         this.websocketServer.on(WebSocketEvents.Connection, (socket: Socket) => {
-            console.info(`[v-server]: on websocket connection event`);
+            logger.info('[VServer] on websocket connection event');
             socket.on(WebSocketEvents.Load, async (data: FileLoadPayload) => {
                 const hash = data.fileNameHash;
-                console.info(`[v-server]: on websocket fileLoad event for file name hash - %s, join room of it`, hash);
+                logger.info('[VServer] on websocket fileLoad event for file name hash - %s, join room of it', hash);
                 socket.join(hash);
                 await this.pushJsonSpec(hash, data.basename);
             });
@@ -107,11 +113,13 @@ export class VServer {
 
     public async start() {
         if (!this.serverRunning) {
+            logger.debug('[VServer] Starting server');
             // select an available port
             this.port = await getPortPromise({ port: this.port });
+            logger.debug('[VServer] Found available port: %d', this.port);
             this.httpServer.listen(this.port, '0.0.0.0', () => {
                 this.serverRunning = true;
-                console.info(`[v-server]: server is listening on: http://%s:%s`, this.host, this.port);
+                logger.info('[VServer] server is listening on: http://%s:%s', this.host, this.port);
             });
         }
     }
@@ -123,13 +131,15 @@ export class VServer {
     public stop() {
         this.httpServer.close();
         this.serverRunning = false;
-        console.info(`[v-server]: server is stopping`);
+        logger.info('[VServer] server is stopping');
     }
 
     private async pushJsonSpec(hash: FileNameHash, baseFileName: string) {
+        logger.debug('[VServer] Pushing JSON spec for %s with hash %s', baseFileName, hash);
         try {
             if (!VCache.has(hash)) {
                 // todo: UI display errors?
+                logger.debug('[VServer] Cannot find cached content for hash: %s', hash);
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
             const { fileName } = VCache.get(hash)!;
@@ -139,7 +149,9 @@ export class VServer {
             }
             // schema is fresh after revalidation
             const { schema } = VCache.get(hash)!;
+            logger.debug('[VServer] Emitting schema to room: %s', hash);
             this.websocketServer.to(hash).emit(WebSocketEvents.Push, schema);
+            logger.debug('[VServer] Schema successfully pushed to clients');
         } catch (e) {
             const error = e as Error;
             const contextInfo: IOperationErrorContext = {
@@ -152,7 +164,7 @@ export class VServer {
             // If the error is already a VError, use it directly
             const vError = error instanceof VError ? error : ErrorHandler.processError(error, contextInfo);
 
-            console.error(`[v-server]: Error during synchronization:\n${vError.format()}`);
+            logger.error('[VServer] Error during synchronization: %s', error.message);
 
             vscode.window.showErrorMessage(`Cannot synchronize changes of ${baseFileName}`, {
                 detail: vError.format(),

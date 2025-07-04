@@ -67,7 +67,7 @@ export class VError extends Error {
 
         if (this.details) {
             const detailsStr = Object.entries(this.details)
-                .filter(([_, value]) => value !== undefined)
+                .filter(([key, value]) => value !== undefined && key !== 'fileHash')
                 .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
                 .join('\n');
 
@@ -75,6 +75,9 @@ export class VError extends Error {
                 message += `\n\nDetails:\n${detailsStr}`;
             }
         }
+
+        message += `\n\nFor more detailed information, check the extension logs in the 'Output' panel (View > Output) and select 'V-Swagger' from the dropdown.`;
+        message += `\nIf you believe this is a bug, please report it at: https://github.com/v-swagger/v-swagger/issues`;
 
         return message;
     }

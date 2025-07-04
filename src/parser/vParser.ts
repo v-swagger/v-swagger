@@ -5,6 +5,7 @@ import * as path from 'path';
 import { io } from 'socket.io-client';
 import * as vscode from 'vscode';
 import { VCache } from '../cache/vCache';
+import { logger } from '../logger/vLogger';
 import { VServer } from '../server/vServer';
 import {
     $RefSchema,
@@ -49,10 +50,13 @@ export class VParser {
     }
 
     public async parse(): Promise<vscode.Uri> {
+        logger.debug('[VParser] Starting parse operation for file %s', this.fileName);
         this.seen.clear();
         await this.resolve(this.fileName);
         // todo: watch change & notify subscribers
-        return this.getPreviewUrl();
+        const url = this.getPreviewUrl();
+        logger.debug('[VParser] Parse completed successfully for %s', this.fileName);
+        return url;
     }
 
     public destroy(fileName: string) {
@@ -62,8 +66,10 @@ export class VParser {
 
     private async resolve(fileName: string) {
         const hash = hashFileName(fileName);
+        logger.debug('[VParser] Resolving file %s with hash %s', fileName, hash);
         // the freshness is maintained by File Watcher
         if (this.seen.has(hash) || (VCache.has(hash) && !VCache.mustRevalidate(hash))) {
+            logger.debug('[VParser] File %s already resolved or cached, skipping', fileName);
             return;
         }
         try {
@@ -79,18 +85,18 @@ export class VParser {
             }
             const dereferenced = await this.dereference(parsedSchema);
             VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
+            logger.debug('[VParser] Successfully resolved and cached %s', fileName);
         } catch (e) {
             const error = e as Error;
 
             // If the error is already a VError, use it directly
             const errorContext: IFileErrorContext = {
                 fileName: fileName,
-                fileHash: hash,
                 referenceValue: fileName, // Include the full path for better error context
             };
             const vError = error instanceof VError ? error : ErrorHandler.processError(error, errorContext);
 
-            console.error(`[v-parser]: Error when resolving ${fileName}:\n${vError.format()}`);
+            logger.error(`[VParser] Error when resolving %s`, fileName);
 
             // Throw the enhanced error directly
             throw vError;
@@ -104,7 +110,11 @@ export class VParser {
             return dereferenced;
         } catch (error) {
             // Log the error with full context but always rethrow it
-            console.error(`[v-parser]: Error in dereference process for ${this.fileName}:`, error);
+            logger.error(
+                `[VParser] Error in dereference process for %s with error: `,
+                this.fileName,
+                (error as Error).message
+            );
             throw error;
         }
     }
@@ -130,7 +140,7 @@ export class VParser {
             // Process the error to enhance it with context
             const vError = ErrorHandler.processError(error, errorContext);
 
-            console.error(`[v-parser]: Error when dereferencing schema:\n${vError.format()}`);
+            logger.error('[VParser] Error when dereferencing schema: %s', error.message);
 
             // Throw the enhanced error directly
             throw vError;
@@ -160,8 +170,10 @@ export class VParser {
                     // Process the error to enhance it with context
                     const vError = ErrorHandler.processError(error, errorContext);
 
-                    console.error(
-                        `[v-parser]: Error when dereferencing external reference "${value}":\n${vError.format()}`
+                    logger.error(
+                        '[VParser] Error when dereferencing external reference "%s": %s',
+                        value,
+                        error.message
                     );
 
                     // Throw the enhanced error directly
@@ -176,6 +188,7 @@ export class VParser {
 
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
         const { absolutePath, hashPath } = normalize$Ref(value);
+        logger.debug('[VParser] Resolving external reference %s with hash path %s', value, hashPath);
         const hash = hashFileName(absolutePath);
         if (!VCache.has(hash)) {
             return;
@@ -188,7 +201,7 @@ export class VParser {
     }
 
     private registerFileChangeListener() {
-        console.info(`[v-parser]: create watcher for file - %s`, this.fileName);
+        logger.info(`[VParser] create watcher for file - %s`, this.fileName);
         this.watcher.onDidChange(async (uri) => {
             const baseFileName = path.basename(this.fileName);
             await vscode.window.withProgress(
@@ -198,7 +211,7 @@ export class VParser {
                 },
                 async () => {
                     VCache.setValidationState(this.hash, true);
-                    console.info(`[v-parser]: file %s changed, notify clients`, uri);
+                    logger.info(`[VParser] file %s changed, notify clients`, uri);
                     // ask client to load data
                     VParser.socket.emit(WebSocketEvents.Load, {
                         basename: baseFileName,
@@ -215,7 +228,7 @@ export class VParser {
 
     private getPreviewUrl(): vscode.Uri {
         const uri = vscode.Uri.joinPath(VServer.getInstance().getServerUri(), this.hash, path.basename(this.fileName));
-        console.info(`[v-parser]: VServer serves page for %s at %s`, this.fileName, uri);
+        logger.info(`[VParser] VServer serves page for %s at %s`, this.fileName, uri);
         return uri;
     }
 }
