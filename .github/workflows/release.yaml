@@ -101,7 +101,6 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   files: |
-                      dist/**
                       *.vsix
                   body_path: CHANGELOG.md
               env:
