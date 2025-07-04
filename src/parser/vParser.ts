@@ -177,21 +177,12 @@ export class VParser {
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
         const { absolutePath, hashPath } = normalize$Ref(value);
         const hash = hashFileName(absolutePath);
-
-        // Check if the reference exists in cache
         if (!VCache.has(hash)) {
-            throw new Error(`External reference not found: ${absolutePath}`);
+            return;
         }
-
         const { schema: refSchema } = VCache.get(hash)!;
         const refPath = hashPath.replaceAll(path.posix.sep, '.');
         const resolvedRef = _.get(refSchema, refPath);
-
-        // Check if the path within the schema exists
-        if (resolvedRef === undefined) {
-            throw new Error(`Path not found in referenced schema: ${hashPath} in ${absolutePath}`);
-        }
-
         delete schema.$ref;
         _.assign(schema, resolvedRef);
     }

@@ -58,7 +58,7 @@ export class VError extends Error {
         let message = `[${this.category}] ${this.message}`;
 
         if (this.filePath) {
-            message += `\nFile: ${this.filePath}`;
+            message += `\n\nFile: ${this.filePath}`;
         }
 
         if (this.suggestion) {
