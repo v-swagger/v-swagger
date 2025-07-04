@@ -88,11 +88,21 @@ jobs:
               uses: mikepenz/release-changelog-builder-action@v3
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20.x
+                  cache: 'yarn'
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+            - name: Package Extension
+              run: yarn package
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
                   files: |
                       dist/**
+                      *.vsix
                   body_path: CHANGELOG.md
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

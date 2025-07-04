@@ -3,7 +3,7 @@
     "displayName": "v-swagger",
     "publisher": "Pylon",
     "description": "A VS Code plugin that visualizes Swagger/OpenAPI definitions",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "engines": {
         "vscode": "^1.74.0",
         "node": ">=20"
@@ -82,7 +82,8 @@
         "pretest": "yarn compile && yarn lint",
         "test": "jest --maxWorkers=4 --logHeapUsage --coverage --coverageThreshold '{}' --forceExit --detectOpenHandles",
         "prepare": "husky install",
-        "package": "vsce package",
+        "vscode:package": "vsce package",
+        "vscode:publish": "vsce publish",
         "bumpup": "yarn version patch --no-git-tag-version"
     },
     "lint-staged": {
