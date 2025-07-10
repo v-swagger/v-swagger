@@ -31,7 +31,7 @@ export class PathRewriter {
      * Tracks which rules were applied to a reference for better error reporting
      */
     private rewriteReference(ref: string): { rewritten: string; appliedRules: RewriteRule[] } {
-        logger.debug('[PathRewriter] Rewriting reference: %s', ref);
+        logger.info('[PathRewriter] Rewriting reference: %s', ref);
         let rewritten = ref;
         const appliedRules: RewriteRule[] = [];
 
@@ -41,7 +41,7 @@ export class PathRewriter {
 
             // If the path was changed by this rule, add it to appliedRules
             if (beforeRewrite !== rewritten) {
-                logger.debug(
+                logger.info(
                     '[PathRewriter] Rule applied: %s -> %s (result: %s)',
                     rule.regex.toString(),
                     rule.value,
@@ -54,7 +54,7 @@ export class PathRewriter {
         if (appliedRules.length > 0) {
             logger.info('[PathRewriter] Reference rewritten from %s to %s', ref, rewritten);
         } else {
-            logger.debug('[PathRewriter] No rules applied to reference: %s', ref);
+            logger.info('[PathRewriter] No rules applied to reference: %s', ref);
         }
 
         return { rewritten, appliedRules };
@@ -76,7 +76,7 @@ export class PathRewriter {
             try {
                 const { absolutePath, hashPath } = normalize$Ref(fullPath);
                 const isInternal = absolutePath === this.fileName;
-                logger.debug(
+                logger.info(
                     '[PathRewriter] Path resolution details: fullPath: %s, absolutePath: %s, hashPath: %s, fileName: %s',
                     fullPath,
                     absolutePath,
@@ -87,7 +87,7 @@ export class PathRewriter {
                 if (!isInternal) {
                     // collect all references
                     this.refSet.add(absolutePath);
-                    logger.debug('[PathRewriter] External reference added: %s', absolutePath);
+                    logger.info('[PathRewriter] External reference added: %s', absolutePath);
                 }
 
                 return isInternal ? `${REF_HASH_SEPARATOR}${hashPath}` : fullPath;

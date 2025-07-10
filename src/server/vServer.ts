@@ -9,7 +9,7 @@ import { VCache } from '../cache/vCache';
 import { logger } from '../logger/vLogger';
 import { VParser } from '../parser/vParser';
 import { FileNameHash, IOperationErrorContext, WebSocketEvents } from '../types';
-import { ErrorHandler, VError } from '../utils/errorHandler';
+import { ErrorCategory, ErrorHandler, VError } from '../utils/errorHandler';
 import { getExternalAddress, isRevalidationRequired } from '../utils/utils';
 
 type FileLoadPayload = {
@@ -32,14 +32,14 @@ export class VServer {
         // TODO: validate the port
         this.port = vscode.workspace.getConfiguration('v-swagger').defaultPort ?? DEFAULT_PORT;
         this.host = vscode.workspace.getConfiguration('v-swagger').defaultHost ?? this.getDefaultHost();
-        logger.debug('[VServer] Initializing with host: %s, port: %d', this.host, this.port);
+        logger.info('[VServer] Initializing with host: %s, port: %d', this.host, this.port);
 
         const app = this.configureHttpServer();
         this.httpServer = http.createServer(app);
-        logger.debug('[VServer] HTTP server created');
+        logger.info('[VServer] HTTP server created');
 
         this.websocketServer = new SocketServer(this.httpServer);
-        logger.debug('[VServer] WebSocket server created');
+        logger.info('[VServer] WebSocket server created');
         this.initializeWebsocketServer();
     }
 
@@ -65,12 +65,21 @@ export class VServer {
     }
 
     private configureHttpServer() {
-        logger.debug('[VServer] Configuring HTTP server');
+        logger.info('[VServer] Configuring HTTP server');
         const app = express();
+
+        // Only handle specific routes and return 404 for everything else
+
+        // Route 1: Static files
         app.use('/static', express.static(path.join(__dirname, '..', '..', 'node_modules'))); // fixme: potential security issue
-        logger.debug('[VServer] Static route configured for node_modules');
+        logger.info('[VServer] Static route configured for node_modules');
+
+        // Route 2: File preview with hash and basename
         app.use('/:fileNameHash/:basename', (req: express.Request, res: express.Response) => {
             try {
+                if (!this.isValidRequest(req, res)) {
+                    return;
+                }
                 VCache.setValidationState(req.params.fileNameHash, isRevalidationRequired(req.headers));
                 const htmlContent = fs
                     .readFileSync(path.join(__dirname, '..', '..', 'static', 'index.html'))
@@ -94,8 +103,13 @@ export class VServer {
                     detail: vError.format(),
                     modal: true,
                 });
+                res.status(400).send({
+                    error: vError.message,
+                    detail: vError.format(),
+                });
             }
         });
+
         return app;
     }
 
@@ -113,10 +127,10 @@ export class VServer {
 
     public async start() {
         if (!this.serverRunning) {
-            logger.debug('[VServer] Starting server');
+            logger.info('[VServer] Starting server');
             // select an available port
             this.port = await getPortPromise({ port: this.port });
-            logger.debug('[VServer] Found available port: %d', this.port);
+            logger.info('[VServer] Found available port: %d', this.port);
             this.httpServer.listen(this.port, '0.0.0.0', () => {
                 this.serverRunning = true;
                 logger.info('[VServer] server is listening on: http://%s:%s', this.host, this.port);
@@ -135,11 +149,11 @@ export class VServer {
     }
 
     private async pushJsonSpec(hash: FileNameHash, baseFileName: string) {
-        logger.debug('[VServer] Pushing JSON spec for %s with hash %s', baseFileName, hash);
+        logger.info('[VServer] Pushing JSON spec for %s with hash %s', baseFileName, hash);
         try {
             if (!VCache.has(hash)) {
                 // todo: UI display errors?
-                logger.debug('[VServer] Cannot find cached content for hash: %s', hash);
+                logger.info('[VServer] Cannot find cached content for hash: %s', hash);
                 throw new Error(`cannot load file content with hash: ${hash}`);
             }
             const { fileName } = VCache.get(hash)!;
@@ -149,9 +163,9 @@ export class VServer {
             }
             // schema is fresh after revalidation
             const { schema } = VCache.get(hash)!;
-            logger.debug('[VServer] Emitting schema to room: %s', hash);
+            logger.info('[VServer] Emitting schema to room: %s', hash);
             this.websocketServer.to(hash).emit(WebSocketEvents.Push, schema);
-            logger.debug('[VServer] Schema successfully pushed to clients');
+            logger.info('[VServer] Schema successfully pushed to clients');
         } catch (e) {
             const error = e as Error;
             const contextInfo: IOperationErrorContext = {
@@ -171,5 +185,73 @@ export class VServer {
                 modal: true,
             });
         }
+    }
+
+    // invalid requests with such format:
+    // /hash/basename -> hash is a 8 characters long string. e.g. /7a55a76d/catalog-import-shared.yaml  basename ends with .yaml or .yml or .json
+    // e.g. /7a55a76/catalog-import-shared.yaml is invalid
+    // e.g. /7a55a76/catalog/import-shared.yaml is invalid
+    // e.g. /a55a76dx/catalog-import-shared.yaml.json is valid
+    // e.g. /a55a76dx/catalog-import-shared.yaml is valid
+    private isValidRequest(req: express.Request, res: express.Response): boolean {
+        const { fileNameHash, basename } = req.params;
+        const requestPath = req.originalUrl || `/${fileNameHash}/${basename}`;
+
+        const error = new Error(
+            `Invalid request format for path '${requestPath}': only support the path like /hash/file.yaml or /hash/file.json`
+        );
+        // Check if hash is exactly 8 characters (invalid)
+        if (fileNameHash.length !== 8) {
+            logger.warn('[VServer] Rejected request with 6-character hash: %s, path: %s', fileNameHash, requestPath);
+            const vErr = new VError(
+                error,
+                error.message,
+                ErrorCategory.FileNotFound,
+                undefined,
+                `${fileNameHash} is not a valid hash with 8 chars`,
+                { fileNameHash, basename }
+            );
+            res.status(404).send(vErr.format());
+            return false;
+        }
+
+        // Check if basename contains path segments (invalid)
+        if (basename.includes('/')) {
+            logger.warn(
+                '[VServer] Rejected request with path segments in basename: %s, path: %s',
+                basename,
+                requestPath
+            );
+            const vErr = new VError(
+                error,
+                error.message,
+                ErrorCategory.FileNotFound,
+                undefined,
+                'Remove any path segments (/) from the basename.',
+                { fileNameHash, basename }
+            );
+            res.status(404).send(vErr.format());
+            return false;
+        }
+
+        // Check if basename has valid extension (.yaml, .yml, or .json)
+        const validExtensionPattern = /\.(yaml|yml|json)$/i;
+        if (!validExtensionPattern.test(basename)) {
+            logger.warn('[VServer] Rejected request with invalid file extension: %s, path: %s', basename, requestPath);
+            const vErr = new VError(
+                error,
+                error.message,
+                ErrorCategory.FileNotFound,
+                undefined,
+                'Use a file with a .yaml, .yml, or .json extension.',
+                { fileNameHash, basename }
+            );
+            res.status(404).send(vErr.format());
+            return false;
+        }
+
+        // Request is valid
+        logger.info('[VServer] Validated request for path: %s', requestPath);
+        return true;
     }
 }

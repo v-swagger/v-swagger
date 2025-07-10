@@ -50,12 +50,12 @@ export class VParser {
     }
 
     public async parse(): Promise<vscode.Uri> {
-        logger.debug('[VParser] Starting parse operation for file %s', this.fileName);
+        logger.info('[VParser] Starting parse operation for file %s', this.fileName);
         this.seen.clear();
         await this.resolve(this.fileName);
         // todo: watch change & notify subscribers
         const url = this.getPreviewUrl();
-        logger.debug('[VParser] Parse completed successfully for %s', this.fileName);
+        logger.info('[VParser] Parse completed successfully for %s', this.fileName);
         return url;
     }
 
@@ -66,10 +66,10 @@ export class VParser {
 
     private async resolve(fileName: string) {
         const hash = hashFileName(fileName);
-        logger.debug('[VParser] Resolving file %s with hash %s', fileName, hash);
+        logger.info('[VParser] Resolving file %s with hash %s', fileName, hash);
         // the freshness is maintained by File Watcher
         if (this.seen.has(hash) || (VCache.has(hash) && !VCache.mustRevalidate(hash))) {
-            logger.debug('[VParser] File %s already resolved or cached, skipping', fileName);
+            logger.info('[VParser] File %s already resolved or cached, skipping', fileName);
             return;
         }
         try {
@@ -85,7 +85,7 @@ export class VParser {
             }
             const dereferenced = await this.dereference(parsedSchema);
             VCache.set(hash, { schema: dereferenced, fileName, mustRevalidate: false });
-            logger.debug('[VParser] Successfully resolved and cached %s', fileName);
+            logger.info('[VParser] Successfully resolved and cached %s', fileName);
         } catch (e) {
             const error = e as Error;
 
@@ -188,7 +188,7 @@ export class VParser {
 
     private resolveExternal$Ref(schema: $RefSchema, value: string) {
         const { absolutePath, hashPath } = normalize$Ref(value);
-        logger.debug('[VParser] Resolving external reference %s with hash path %s', value, hashPath);
+        logger.info('[VParser] Resolving external reference %s with hash path %s', value, hashPath);
         const hash = hashFileName(absolutePath);
         if (!VCache.has(hash)) {
             return;
