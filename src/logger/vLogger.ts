@@ -11,7 +11,7 @@ export enum LogLevel {
 class VLogger {
     private static instance: VLogger;
     private logOutputChannel: vscode.LogOutputChannel;
-    private logLevel: LogLevel = LogLevel.INFO; // Default level
+    private logLevel: LogLevel = LogLevel.DEBUG; // Default level
 
     private constructor() {
         this.logOutputChannel = vscode.window.createOutputChannel('V-Swagger', { log: true });
